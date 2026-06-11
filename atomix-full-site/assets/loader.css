@@ -1,0 +1,50 @@
+/* Atomix AI single loader */
+.atomix-loader {
+    width: 72px;
+    height: 72px;
+    filter: drop-shadow(0 0 12px rgba(77, 208, 196, 0.32));
+}
+
+.atomix-loader .nucleus {
+    animation: atomixNucPulse 2s ease-in-out infinite;
+    transform-origin: 50px 50px;
+}
+
+.atomix-loader .orbit-1 {
+    animation: atomixSpin 2.2s linear infinite;
+    transform-origin: 50px 50px;
+}
+
+.atomix-loader .orbit-2 {
+    animation: atomixSpin 3s linear infinite;
+    transform-origin: 50px 50px;
+}
+
+.atomix-loader .orbit-3 {
+    animation: atomixSpin 4s linear infinite reverse;
+    transform-origin: 50px 50px;
+}
+
+.atomix-loader .edot {
+    animation: atomixDotGlow 2s ease-in-out infinite;
+}
+
+.atomix-loader .d2 { animation-delay: .4s; }
+.atomix-loader .d3 { animation-delay: .8s; }
+.atomix-loader .d4 { animation-delay: 1.2s; }
+.atomix-loader .d5 { animation-delay: 1.6s; }
+.atomix-loader .d6 { animation-delay: 2s; }
+
+@keyframes atomixNucPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.6; }
+}
+
+@keyframes atomixSpin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes atomixDotGlow {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+}
