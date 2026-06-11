@@ -2235,18 +2235,30 @@
 
         // Splash logic — runs immediately, no waiting for load event
         (function() {
+            // If user already has an active session, skip the video — show only logo splash
+            var hasSession = false;
+            try { hasSession = !!localStorage.getItem('sb-oiznrumsqmqlkipktkai-auth-token'); } catch(e) {}
+
             var splashVideo = document.getElementById('splashVideo');
-            if (splashVideo) {
-                splashVideo.addEventListener('ended', startLogoSplash);
-                splashVideo.addEventListener('error', startLogoSplash);
-                splashVideo.addEventListener('loadedmetadata', function() {
-                    var d = splashVideo.duration;
-                    if (d && isFinite(d)) setTimeout(startLogoSplash, d * 1000 + 300);
-                });
-                try { splashVideo.play().catch(startLogoSplash); } catch(e) { startLogoSplash(); }
+
+            if (hasSession) {
+                // Already logged in — hide video, go straight to logo phase
+                if (splashVideo) { splashVideo.pause(); splashVideo.style.display = 'none'; }
+                startLogoSplash();
+            } else {
+                // First visit / not logged in — play full video + logo splash
+                if (splashVideo) {
+                    splashVideo.addEventListener('ended', startLogoSplash);
+                    splashVideo.addEventListener('error', startLogoSplash);
+                    splashVideo.addEventListener('loadedmetadata', function() {
+                        var d = splashVideo.duration;
+                        if (d && isFinite(d)) setTimeout(startLogoSplash, d * 1000 + 300);
+                    });
+                    try { splashVideo.play().catch(startLogoSplash); } catch(e) { startLogoSplash(); }
+                }
+                setTimeout(startLogoSplash, 4000);
+                setTimeout(finishSplash, 6000);
             }
-            setTimeout(startLogoSplash, 4000);
-            setTimeout(finishSplash, 6000);
         })();
 
         // ===== Р­Р›Р•РњР•РќРўР« =====
