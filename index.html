@@ -580,6 +580,29 @@
         .messages.empty {
             justify-content: center;
             padding-bottom: 220px;
+            position: relative;
+        }
+
+        /* Idle atom canvas animation (shown when no messages) */
+        #idleAtomCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        .messages.empty #idleAtomCanvas {
+            opacity: 1;
+        }
+        .messages.empty .empty-title,
+        .messages.empty .empty-subtitle,
+        .messages.empty .empty-suggestions {
+            position: relative;
+            z-index: 1;
         }
 
         .empty-title {
@@ -2143,7 +2166,9 @@
                 </div>
             </header>
 
-            <div id="messages" class="messages"></div>
+            <div id="messages" class="messages">
+                <canvas id="idleAtomCanvas"></canvas>
+            </div>
             <button id="scrollBottomButton" class="scroll-bottom-button" type="button" aria-label="Вниз">↓</button>
 
             <div class="composer">
@@ -2338,6 +2363,177 @@
         const consoleInput = document.getElementById('consoleInput');
         const consoleForm = document.getElementById('consoleForm');
         const consoleClose = document.getElementById('consoleClose');
+
+        // ===== IDLE ATOM CANVAS ANIMATION =====
+        const idleAtomCanvas = document.getElementById('idleAtomCanvas');
+        const idleCtx = idleAtomCanvas ? idleAtomCanvas.getContext('2d') : null;
+        const IDLE_COLOR = '#4dd0c4';
+        let idleAnimationId = null;
+
+        class IdleAtom {
+            constructor(x, y, size = 1) {
+                this.x = x; this.y = y; this.size = size;
+                this.born = performance.now();
+                this.state = 'growing';
+                this.opacity = 0; this.orbitScale = 0;
+                this.vx = 0; this.vy = 0;
+            }
+            getElectrons(t) {
+                const rx = 38 * this.size * this.orbitScale;
+                const ry = 12 * this.size * this.orbitScale;
+                const pts = [];
+                [[-30, 7000], [30, 10000], [90, 13000]].forEach(([tilt, spd], idx) => {
+                    const tiltR = tilt * Math.PI / 180;
+                    const angle = (t / spd) * Math.PI * 2 * (idx === 2 ? -1 : 1);
+                    for (const side of [0, Math.PI]) {
+                        const a = angle + side;
+                        const lx = rx * Math.cos(a), ly = ry * Math.sin(a);
+                        pts.push({
+                            x: this.x + lx * Math.cos(tiltR) - ly * Math.sin(tiltR),
+                            y: this.y + lx * Math.sin(tiltR) + ly * Math.cos(tiltR)
+                        });
+                    }
+                });
+                return pts;
+            }
+            update(now) {
+                const age = now - this.born;
+                if (this.state === 'growing') {
+                    this.opacity = Math.min(1, age / 500);
+                    this.orbitScale = Math.min(1, age / 2000);
+                    if (age > 2200) this.state = 'idle';
+                } else if (this.state === 'floating') {
+                    this.x += this.vx; this.y += this.vy;
+                    const m = 150;
+                    if (this.x < m) this.opacity = this.x / m;
+                    else if (this.x > idleAtomCanvas.width - m) this.opacity = (idleAtomCanvas.width - this.x) / m;
+                    else this.opacity = 1;
+                }
+            }
+            draw(t) {
+                idleCtx.save();
+                idleCtx.translate(this.x, this.y);
+                [[-30, 7000], [30, 10000], [90, 13000]].forEach(([tilt, spd], idx) => {
+                    const tiltR = tilt * Math.PI / 180;
+                    const angle = (t / spd) * Math.PI * 2 * (idx === 2 ? -1 : 1);
+                    const rx = Math.max(0, 38 * this.size * this.orbitScale);
+                    const ry = Math.max(0, 12 * this.size * this.orbitScale);
+                    if (rx < 0.1 || ry < 0.1) return;
+                    idleCtx.save();
+                    idleCtx.rotate(tiltR);
+                    idleCtx.beginPath();
+                    idleCtx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+                    idleCtx.strokeStyle = IDLE_COLOR;
+                    idleCtx.lineWidth = 1.5;
+                    idleCtx.globalAlpha = this.opacity * 0.4;
+                    idleCtx.stroke();
+                    idleCtx.restore();
+                    for (const side of [0, Math.PI]) {
+                        const a = angle + side;
+                        const lx = rx * Math.cos(a), ly = ry * Math.sin(a);
+                        const ex = lx * Math.cos(tiltR) - ly * Math.sin(tiltR);
+                        const ey = lx * Math.sin(tiltR) + ly * Math.cos(tiltR);
+                        idleCtx.beginPath();
+                        idleCtx.arc(ex, ey, Math.max(0.1, 4 * this.size * this.orbitScale), 0, Math.PI * 2);
+                        idleCtx.strokeStyle = IDLE_COLOR;
+                        idleCtx.lineWidth = 2;
+                        idleCtx.globalAlpha = this.opacity;
+                        idleCtx.stroke();
+                    }
+                });
+                idleCtx.beginPath();
+                idleCtx.arc(0, 0, 6 * this.size, 0, Math.PI * 2);
+                idleCtx.fillStyle = IDLE_COLOR;
+                idleCtx.globalAlpha = this.opacity;
+                idleCtx.fill();
+                idleCtx.restore();
+            }
+            isDead() {
+                return this.x < -200 || this.x > idleAtomCanvas.width + 200 ||
+                       this.y < -200 || this.y > idleAtomCanvas.height + 200;
+            }
+        }
+
+        let idleAtoms = [];
+        let idleMainAtom = null;
+        let idleLastCheck = 0;
+        let idleSpawnCooldown = {};
+
+        function idleDist(a, b) { return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2); }
+
+        function resizeIdleCanvas() {
+            if (!idleAtomCanvas) return;
+            const rect = messages.getBoundingClientRect();
+            idleAtomCanvas.width = rect.width;
+            idleAtomCanvas.height = rect.height;
+            if (idleMainAtom) {
+                idleMainAtom.x = idleAtomCanvas.width / 2;
+                idleMainAtom.y = idleAtomCanvas.height / 2 - 40;
+            }
+        }
+
+        function startIdleAnimation() {
+            if (idleAnimationId || !idleCtx) return;
+            resizeIdleCanvas();
+            idleMainAtom = new IdleAtom(idleAtomCanvas.width / 2, idleAtomCanvas.height / 2 - 40, 1.6);
+            idleMainAtom.state = 'idle';
+            idleMainAtom.opacity = 1;
+            idleMainAtom.orbitScale = 1;
+            idleAtoms = [idleMainAtom];
+            idleSpawnCooldown = {};
+
+            function idleLoop(t) {
+                idleCtx.clearRect(0, 0, idleAtomCanvas.width, idleAtomCanvas.height);
+                if (t - idleLastCheck > 60) {
+                    idleLastCheck = t;
+                    idleAtoms.forEach((atom, idx) => {
+                        if (atom.state === 'growing') return;
+                        const e = atom.getElectrons(t);
+                        for (let i = 0; i < e.length; i++) {
+                            for (let j = i + 1; j < e.length; j++) {
+                                if (idleDist(e[i], e[j]) < 16) {
+                                    const mx = (e[i].x + e[j].x) / 2;
+                                    const my = (e[i].y + e[j].y) / 2;
+                                    const key = `${idx}`;
+                                    if (!idleSpawnCooldown[key] || t - idleSpawnCooldown[key] > 3000) {
+                                        idleSpawnCooldown[key] = t;
+                                        setTimeout(() => {
+                                            if (!idleAnimationId) return;
+                                            const baby = new IdleAtom(mx, my, 1);
+                                            idleAtoms.push(baby);
+                                            setTimeout(() => {
+                                                baby.state = 'floating';
+                                                baby.vx = (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.5);
+                                                baby.vy = (Math.random() - 0.5) * 0.3;
+                                            }, 2200);
+                                        }, 150);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                idleAtoms.forEach(a => a.update(t));
+                idleAtoms.forEach(a => a.draw(t));
+                idleAtoms = idleAtoms.filter(a => !a.isDead());
+                if (!idleAtoms.includes(idleMainAtom)) idleAtoms.unshift(idleMainAtom);
+                idleAnimationId = requestAnimationFrame(idleLoop);
+            }
+            idleAnimationId = requestAnimationFrame(idleLoop);
+        }
+
+        function stopIdleAnimation() {
+            if (idleAnimationId) {
+                cancelAnimationFrame(idleAnimationId);
+                idleAnimationId = null;
+            }
+            idleAtoms = [];
+            idleMainAtom = null;
+            if (idleCtx) idleCtx.clearRect(0, 0, idleAtomCanvas.width, idleAtomCanvas.height);
+        }
+
+        window.addEventListener('resize', resizeIdleCanvas);
+        // ===== END IDLE ATOM =====
 
         const storageKey = 'atomix_ai_chats_v1';
         const activeChatKey = 'atomix_ai_active_chat_v1';
@@ -2846,7 +3042,10 @@
         }
 
         function renderMessages() {
+            stopIdleAnimation();
             messages.innerHTML = '';
+            // Re-add idle canvas (innerHTML cleared it)
+            if (idleAtomCanvas) messages.appendChild(idleAtomCanvas);
             const session = currentSession();
             chatHistory = session.messages;
             updateConversationControls();
@@ -2883,6 +3082,7 @@
                     suggestions.appendChild(btn);
                 });
                 messages.appendChild(suggestions);
+                startIdleAnimation();
                 updateScrollButton();
                 return;
             }
@@ -2954,6 +3154,7 @@
 
         function addMessage(type, text, shouldPersist = false) {
             messages.classList.remove('empty');
+            stopIdleAnimation();
             // Remove all empty state elements
             messages.querySelectorAll('.empty-title, .empty-subtitle, .empty-suggestions').forEach(el => el.remove());
             const bubble = document.createElement('div');
