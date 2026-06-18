@@ -2474,7 +2474,8 @@
 
         function startIdleAnimation() {
             if (idleAnimationId || !idleCtx) return;
-            resizeIdleCanvas();
+            // Defer resize to next frame so DOM layout is ready
+            requestAnimationFrame(() => { resizeIdleCanvas(); });
             idleMainAtom = new IdleAtom(idleAtomCanvas.width / 2, idleAtomCanvas.height / 2 - 40, 1.6);
             idleMainAtom.state = 'idle';
             idleMainAtom.opacity = 1;
@@ -2484,9 +2485,9 @@
 
             function idleLoop(t) {
                 idleCtx.clearRect(0, 0, idleAtomCanvas.width, idleAtomCanvas.height);
-                if (t - idleLastCheck > 60) {
+                if (t - idleLastCheck > 60 && idleAtomCanvas.width > 0) {
                     idleLastCheck = t;
-                    idleAtoms.forEach((atom, idx) => {
+                    if (idleAtoms.length < 8) idleAtoms.forEach((atom, idx) => {
                         if (atom.state === 'growing') return;
                         const e = atom.getElectrons(t);
                         for (let i = 0; i < e.length; i++) {
