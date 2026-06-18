@@ -31,7 +31,10 @@ function allowedOrigins() {
 function isAllowedOrigin(origin) {
     if (!origin) return true;
     if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) return true;
-    return allowedOrigins().includes(origin);
+    // Auto-allow *.vercel.app (deployment previews + production)
+    if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
+    const list = allowedOrigins();
+    return list.length === 0 || list.includes(origin);
 }
 
 function corsHeaders(request) {
