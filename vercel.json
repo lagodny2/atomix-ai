@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/.netlify/functions/veva-chat",
+      "destination": "/api/veva-chat"
+    },
+    {
+      "source": "/.netlify/functions/ban-appeals",
+      "destination": "/api/ban-appeals"
+    }
+  ]
+}
