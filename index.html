@@ -716,31 +716,44 @@
             width: 72px;
             height: 72px;
             flex: 0 0 72px;
-            filter: drop-shadow(0 0 12px rgba(77, 208, 196, 0.32));
+            filter: drop-shadow(0 0 8px rgba(77,208,196,0.25));
+            animation: atomRestPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes atomRestPulse {
+            0%,100% { filter: drop-shadow(0 0 5px rgba(77,208,196,0.2)); }
+            50% { filter: drop-shadow(0 0 10px rgba(77,208,196,0.4)); }
         }
 
         .thinking-nucleus {
-            animation: atomNucPulse 2s ease-in-out infinite;
+            animation: atomNucRest 4s ease-in-out infinite;
             transform-origin: 50px 50px;
         }
 
+        @keyframes atomNucRest {
+            0%,100% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+
+        /* Keep atomNucPulse for streaming-atom & auth logo */
         @keyframes atomNucPulse {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.5); opacity: 0.6; }
         }
 
+        /* Slow idle orbits */
         .thinking-orbit-1 {
-            animation: atomSpin 2.2s linear infinite;
+            animation: atomSpin 9s linear infinite;
             transform-origin: 50px 50px;
         }
 
         .thinking-orbit-2 {
-            animation: atomSpin 3s linear infinite;
+            animation: atomSpin 12s linear infinite;
             transform-origin: 50px 50px;
         }
 
         .thinking-orbit-3 {
-            animation: atomSpin 4s linear infinite reverse;
+            animation: atomSpin 16s linear infinite reverse;
             transform-origin: 50px 50px;
         }
 
@@ -749,15 +762,21 @@
         }
 
         .thinking-edot {
-            animation: atomDotGlow 2s ease-in-out infinite;
+            animation: atomDotRest 4s ease-in-out infinite;
         }
 
-        .thinking-edot.d2 { animation-delay: .4s; }
-        .thinking-edot.d3 { animation-delay: .8s; }
-        .thinking-edot.d4 { animation-delay: 1.2s; }
-        .thinking-edot.d5 { animation-delay: 1.6s; }
-        .thinking-edot.d6 { animation-delay: 2s; }
+        .thinking-edot.d2 { animation-delay: .7s; }
+        .thinking-edot.d3 { animation-delay: 1.4s; }
+        .thinking-edot.d4 { animation-delay: 2.1s; }
+        .thinking-edot.d5 { animation-delay: 2.8s; }
+        .thinking-edot.d6 { animation-delay: 3.5s; }
 
+        @keyframes atomDotRest {
+            0%,100% { opacity: 0.45; }
+            50% { opacity: 0.9; }
+        }
+
+        /* Keep atomDotGlow for auth logo */
         @keyframes atomDotGlow {
             0%, 100% { opacity: 0.35; }
             50% { opacity: 1; }
