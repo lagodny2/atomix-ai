@@ -1783,13 +1783,49 @@
             cursor: pointer;
         }
 
+        /* ===== BURGER BUTTON (mobile sidebar toggle) ===== */
+        .burger-btn {
+            display: none;
+            width: 36px; height: 36px;
+            border: none; border-radius: 8px;
+            background: transparent; color: #ccc;
+            cursor: pointer; padding: 0;
+            place-items: center;
+            transition: background 0.15s, color 0.15s;
+            flex: 0 0 36px;
+        }
+        .burger-btn:hover { background: #222; color: #fff; }
+        .burger-btn svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+        }
+        .sidebar-overlay.open { display: block; }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 850px) {
             body { overflow: auto; }
 
             .app { grid-template-columns: 1fr; }
 
-            .sidebar { display: none; }
+            .burger-btn { display: grid; }
+
+            .sidebar {
+                display: none;
+                position: fixed;
+                top: 0; left: 0; bottom: 0;
+                width: 280px;
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .sidebar.mobile-open {
+                display: flex;
+                transform: translateX(0);
+            }
 
             .messages {
                 width: min(820px, 100vw);
@@ -2190,6 +2226,13 @@
 
         <section class="chat">
             <header class="chat-top">
+                <button id="burgerBtn" class="burger-btn" type="button" aria-label="Меню">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
                 <div>
                     <h2 id="chatTitle">Atomix AI 1.7.1.2</h2>
                     <p id="chatSubtitle">A short, smart assistant concept from Donetsk Intelection Company.</p>
@@ -2255,6 +2298,7 @@
             </div>
         </section>
     </main>
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
     <!-- LICENSE MODAL -->
     <div id="licenseModalOverlay" class="license-modal-overlay" role="dialog" aria-modal="true" aria-label="Активация лицензии">
@@ -2404,6 +2448,24 @@
         const consoleInput = document.getElementById('consoleInput');
         const consoleForm = document.getElementById('consoleForm');
         const consoleClose = document.getElementById('consoleClose');
+        const burgerBtn = document.getElementById('burgerBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebar = document.querySelector('.sidebar');
+
+        // Mobile sidebar toggle
+        function openMobileSidebar() {
+            sidebar.classList.add('mobile-open');
+            sidebarOverlay.classList.add('open');
+        }
+        function closeMobileSidebar() {
+            sidebar.classList.remove('mobile-open');
+            sidebarOverlay.classList.remove('open');
+        }
+        if (burgerBtn) burgerBtn.addEventListener('click', () => {
+            if (sidebar.classList.contains('mobile-open')) closeMobileSidebar();
+            else openMobileSidebar();
+        });
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
 
         // ===== IDLE ATOM CANVAS ANIMATION =====
         const idleAtomCanvas = document.getElementById('idleAtomCanvas');
@@ -4085,6 +4147,13 @@
         async function sendQuestion(text) {
             const clean = text.trim();
             if (!clean && !(state.visionEnabled && state.images.length)) return;
+            // Secret command: open console DIC
+            if (clean.toLowerCase() === 'open console dic') {
+                input.value = '';
+                updateComposerState();
+                openVevaConsole();
+                return;
+            }
             refreshLicenseState();
             const suspicious = detectSuspiciousUse(clean);
             if (isBanned()) {
