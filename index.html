@@ -2497,6 +2497,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <script>
         if (new URLSearchParams(window.location.search).get('desktop') === '1') {
             document.body.classList.add('desktop-app');
@@ -3005,7 +3006,7 @@
 
         function renderMarkdown(text) {
             if (typeof marked !== 'undefined') {
-                return marked.parse(text);
+                return DOMPurify.sanitize(marked.parse(text), { ADD_TAGS: ['iframe'], ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling'] });
             }
             const source = String(text).replace(/\r\n/g, '\n');
             const codeBlocks = [];
@@ -3720,7 +3721,7 @@
         function reportSecurityIncident(kind, reason, text) {
             fetch(appealApiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-Api-Token': 'ATOMIX_SECRET_TOKEN_HERE' },
                 body: JSON.stringify({
                     action: 'incident',
                     kind,
@@ -3989,7 +3990,7 @@
             try {
                 const response = await fetch(appealApiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-Api-Token': 'ATOMIX_SECRET_TOKEN_HERE' },
                     body: JSON.stringify({ action: 'create', id: appealId, deviceId: securityState.deviceId, reason: securityState.reason, lastBadText: securityState.lastBadText, permanent: securityState.permanent, bannedUntil: securityState.bannedUntil, strikes: securityState.strikes, banAttempts: securityState.banAttempts, userAgent: navigator.userAgent })
                 });
                 const data = await response.json().catch(() => ({}));
@@ -4285,7 +4286,7 @@
             try {
                 response = await fetch('/.netlify/functions/veva-chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream', 'X-Api-Token': 'ATOMIX_SECRET_TOKEN_HERE' },
                     body: JSON.stringify({
                         message,
                         history: strictJailbreakMode ? [] : requestHistoryForModel(),
@@ -4380,7 +4381,7 @@
                 genBubble.classList.add('streaming'); setBusy(true); modelStatus.textContent = 'Генерация...';
                 try {
                     const res = await fetch('/.netlify/functions/veva-chat', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Api-Token': 'ATOMIX_SECRET_TOKEN_HERE' },
                         body: JSON.stringify({ action: 'generateImage', prompt: clean })
                     });
                     const result = await res.json();

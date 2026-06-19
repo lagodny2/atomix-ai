@@ -12,7 +12,7 @@ export const config = { runtime: 'edge' };
 const baseHeaders = {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Api-Token',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
     'Vary': 'Origin'
 };
@@ -30,9 +30,8 @@ function allowedOrigins() {
 function isAllowedOrigin(origin) {
     if (!origin) return true;
     if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) return true;
-    if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
-    const list = allowedOrigins();
-    return list.length === 0 || list.includes(origin);
+    if (/^https:\/\/atomix-ai(-[a-z0-9]+)?\.vercel\.app$/i.test(origin)) return true;
+    return allowedOrigins().includes(origin);
 }
 
 function corsHeaders(request) {
@@ -103,6 +102,14 @@ export default async function handler(request) {
     }
     if (request.method === 'POST' && !checkRateLimit(request)) {
         return json(429, { ok: false, error: 'Too many requests' }, request);
+    }
+
+    const apiToken = process.env.ATOMIX_API_TOKEN;
+    if (apiToken && request.method === 'POST') {
+        const provided = request.headers.get('X-Api-Token');
+        if (provided !== apiToken) {
+            return json(403, { ok: false, error: 'Forbidden' }, request);
+        }
     }
 
     const url = new URL(request.url);
