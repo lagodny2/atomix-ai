@@ -1195,12 +1195,15 @@
             display: none;
         }
 
-        /* Static atom footer — shown at end of completed bot messages (slow rest animation) */
+        /* Static atom footer — shown only on the last bot message (slow rest animation) */
         .static-atom-footer {
-            display: flex;
+            display: none;
             align-items: center;
             margin-top: 10px;
             padding-top: 6px;
+        }
+        .message.bot.last-bot .static-atom-footer {
+            display: flex;
         }
 
         .static-atom {
@@ -3192,6 +3195,13 @@
             renderChatList();
         }
 
+        // Mark only the last bot message so its static atom footer is visible
+        function updateLastBotAtom() {
+            const bots = messages.querySelectorAll('.message.bot');
+            bots.forEach(b => b.classList.remove('last-bot'));
+            if (bots.length) bots[bots.length - 1].classList.add('last-bot');
+        }
+
         function addMessage(type, text, shouldPersist = false) {
             messages.classList.remove('empty');
             stopIdleAnimation();
@@ -3215,6 +3225,7 @@
                 bubble.appendChild(time);
             }
             messages.appendChild(bubble);
+            updateLastBotAtom();
             if (shouldPersist) persistMessage(type === 'bot' ? 'assistant' : 'user', text);
             if (type === 'user' || (type === 'bot' && text.includes('Просмотр фото'))) scrollMessagesToBottom();
             return bubble;
@@ -4151,6 +4162,7 @@
                 loadingBubble.classList.remove('streaming');
                 // Re-render without streaming atom, will add static atom footer
                 setMessageText(loadingBubble, finalAnswer);
+                updateLastBotAtom();
                 persistMessage('assistant', finalAnswer.trim());
             } catch (error) {
                 console.error('Error:', error);
