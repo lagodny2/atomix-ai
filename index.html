@@ -1195,20 +1195,39 @@
             display: none;
         }
 
-        /* Static atom footer — shown at end of completed bot messages */
+        /* Static atom footer — shown at end of completed bot messages (slow rest animation) */
         .static-atom-footer {
             display: flex;
             align-items: center;
             margin-top: 10px;
             padding-top: 6px;
-            opacity: 0.5;
         }
 
         .static-atom {
             width: 22px;
             height: 22px;
             flex: 0 0 22px;
+            filter: drop-shadow(0 0 4px rgba(77,208,196,0.15));
+            animation: saRestPulse 4s ease-in-out infinite;
         }
+
+        @keyframes saRestPulse {
+            0%,100% { filter: drop-shadow(0 0 3px rgba(77,208,196,0.12)); }
+            50% { filter: drop-shadow(0 0 6px rgba(77,208,196,0.3)); }
+        }
+
+        .sa-orbit-1 { animation: atomSpin 9s linear infinite; transform-origin: 14px 14px; }
+        .sa-orbit-2 { animation: atomSpin 12s linear infinite; transform-origin: 14px 14px; }
+        .sa-orbit-3 { animation: atomSpin 16s linear infinite reverse; transform-origin: 14px 14px; }
+
+        .sa-nucleus {
+            animation: atomNucRest 4s ease-in-out infinite;
+            transform-origin: 14px 14px;
+        }
+
+        .sa-edot { animation: atomDotRest 4s ease-in-out infinite; }
+        .sa-edot.d2 { animation-delay: .7s; }
+        .sa-edot.d3 { animation-delay: 1.4s; }
 
         .streaming-atom {
             width: 28px;
@@ -2829,20 +2848,21 @@
 
         // Static atom shown at the end of completed responses
         const STATIC_ATOM_HTML = `<div class="static-atom-footer"><svg class="static-atom" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
-            <g>
+            <g class="sa-orbit-1">
                 <ellipse cx="14" cy="14" rx="11" ry="4.5" fill="none" stroke="#4dd0c4" stroke-width="1.4" transform="rotate(-30,14,14)" opacity="0.3"/>
-                <circle cx="25" cy="14" r="2" fill="#4dd0c4" transform="rotate(-30,14,14)" opacity="0.6"/>
+                <circle class="sa-edot" cx="25" cy="14" r="2" fill="none" stroke="#4dd0c4" stroke-width="1.2" transform="rotate(-30,14,14)"/>
             </g>
-            <g>
+            <g class="sa-orbit-2">
                 <ellipse cx="14" cy="14" rx="11" ry="4.5" fill="none" stroke="#4dd0c4" stroke-width="1.4" transform="rotate(30,14,14)" opacity="0.3"/>
-                <circle cx="25" cy="14" r="2" fill="#4dd0c4" transform="rotate(30,14,14)" opacity="0.6"/>
+                <circle class="sa-edot d2" cx="25" cy="14" r="2" fill="none" stroke="#4dd0c4" stroke-width="1.2" transform="rotate(30,14,14)"/>
             </g>
-            <g>
+            <g class="sa-orbit-3">
                 <ellipse cx="14" cy="14" rx="11" ry="4.5" fill="none" stroke="#4dd0c4" stroke-width="1.4" transform="rotate(90,14,14)" opacity="0.3"/>
-                <circle cx="25" cy="14" r="2" fill="#4dd0c4" transform="rotate(90,14,14)" opacity="0.6"/>
+                <circle class="sa-edot d3" cx="25" cy="14" r="2" fill="none" stroke="#4dd0c4" stroke-width="1.2" transform="rotate(90,14,14)"/>
             </g>
-            <g>
-                <circle cx="14" cy="14" r="2.8" fill="#4dd0c4" opacity="0.7"/>
+            <g class="sa-nucleus">
+                <circle cx="14" cy="14" r="2.8" fill="#4dd0c4" opacity="0.9"/>
+                <circle cx="14" cy="14" r="4.5" fill="none" stroke="#4dd0c4" stroke-width="0.6" opacity="0.2"/>
             </g>
         </svg></div>`;
 
