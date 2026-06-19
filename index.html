@@ -958,6 +958,7 @@
         }
 
         .composer form {
+            position: relative;
             display: grid;
             grid-template-columns: 36px minmax(0, 1fr) 36px 36px;
             gap: 6px;
@@ -990,6 +991,37 @@
         }
 
         .attach-button:hover { background: #303030; color: #fff; }
+
+        /* Attach popup menu */
+        .attach-menu {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 10px;
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 6px 0;
+            min-width: 160px;
+            z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .attach-menu.open { display: block; }
+        .attach-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-align: left;
+        }
+        .attach-menu-item:hover { background: #2a2a2a; }
+        .attach-menu-item .ami-icon { font-size: 1.1rem; width: 22px; text-align: center; }
 
         .composer input {
             min-width: 0;
@@ -2278,8 +2310,13 @@
                     <button id="clearImageButton" type="button">Убрать</button>
                 </div>
                 <form id="chatForm">
-                    <button id="attachButton" class="attach-button" type="button" aria-label="Выбрать фото">+</button>
+                    <button id="attachButton" class="attach-button" type="button" aria-label="Прикрепить">+</button>
+                    <div id="attachMenu" class="attach-menu">
+                        <button class="attach-menu-item" id="attachPhoto" type="button"><span class="ami-icon">🖼</span> Фото</button>
+                        <button class="attach-menu-item" id="attachFile" type="button"><span class="ami-icon">📄</span> Файл</button>
+                    </div>
                     <input id="imageInput" type="file" accept="image/*" multiple hidden>
+                    <input id="fileInput" type="file" multiple hidden>
                     <input id="chatInput" type="text" autocomplete="off" placeholder="Спросите Atomix AI">
                     <button id="micButton" class="mic-button" type="button" aria-label="Голосовой ввод" title="Голосовой ввод">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -4490,8 +4527,38 @@
         fastModeButton.addEventListener('click', () => { setMode('fast'); input.focus(); });
         visionModeButton.addEventListener('click', () => { if (!requireLicense("Распознавание фото")) return; setMode('vision', true); input.focus(); });
         visionToggle.addEventListener('click', () => { if (!requireLicense("Распознавание фото")) return; setVisionEnabled(!state.visionEnabled, !state.visionEnabled); input.focus(); });
-        attachButton.addEventListener('click', () => { if (!requireLicense("Распознавание фото")) return; setVisionEnabled(true, true); });
+        const attachMenu = document.getElementById('attachMenu');
+        const attachPhoto = document.getElementById('attachPhoto');
+        const attachFile = document.getElementById('attachFile');
+        const fileInput = document.getElementById('fileInput');
+
+        attachButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            attachMenu.classList.toggle('open');
+        });
+        attachPhoto.addEventListener('click', () => {
+            attachMenu.classList.remove('open');
+            if (!requireLicense("Распознавание фото")) return;
+            setVisionEnabled(true, true);
+        });
+        attachFile.addEventListener('click', () => {
+            attachMenu.classList.remove('open');
+            fileInput.value = '';
+            fileInput.click();
+        });
+        document.addEventListener('click', (e) => {
+            if (!attachMenu.contains(e.target) && e.target !== attachButton) {
+                attachMenu.classList.remove('open');
+            }
+        });
         imageInput.addEventListener('change', () => { if (!requireLicense("Распознавание фото")) return; selectImages(imageInput.files); input.focus(); });
+        fileInput.addEventListener('change', () => {
+            if (!fileInput.files.length) return;
+            // For now treat files same as images for vision
+            if (!requireLicense("Распознавание фото")) return;
+            selectImages(fileInput.files);
+            input.focus();
+        });
         imageChip.addEventListener('click', e => { const btn = e.target.closest('.image-remove'); if (!btn) return; removeImage(Number(btn.dataset.index)); input.focus(); });
         input.addEventListener('input', updateComposerState);
 
