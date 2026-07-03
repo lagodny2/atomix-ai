@@ -1,6 +1,7 @@
 /**
  * Vercel Edge Function — Atomix AI chat endpoint.
  * Ported from Netlify Functions (netlify/functions/veva-chat.mjs).
+ * Uses Gemini (OpenAI-compatible endpoint) for chat, vision, image gen, and transcription.
  * Removes node:fs prompt-file loading; uses env-var prompts + built-in fallback.
  */
 
@@ -354,8 +355,7 @@ export default async function handler(request) {
     }
 
     /* ── chat ── */
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API;
-    if (!apiKey) return json(500, { error: 'DeepSeek API key is not configured.' }, request);
+    if (!geminiApiKey) return json(500, { error: 'GEMINI_API_KEY не настроен.' }, request);
 
     const userMessage = String(body.message || '').trim().slice(0, 8000);
     if (!userMessage) return json(400, { error: 'Message is required.' }, request);
@@ -366,9 +366,9 @@ export default async function handler(request) {
         : Array.isArray(body.history) ? body.history.slice(-20).map(cleanMessage) : [];
     const webEnabled = body.web === true;
     const images = cleanImages(body.images || body.image);
-    const textModel = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
-    const visionModel = process.env.DEEPSEEK_VISION_MODEL || '';
-    const effectiveImages = images.length && visionModel ? images : [];
+    const chatModel = process.env.GEMINI_CHAT_MODEL || 'gemini-2.5-flash';
+    /* Gemini handles images natively — always include them */
+    const effectiveImages = images;
     const requestedMode = String(body.securityMode || '').toLowerCase();
     const securityMode = strictJailbreakMode || requestedMode === 'jailbreak'
         ? 'jailbreak'
@@ -415,55 +415,35 @@ export default async function handler(request) {
     try {
         const useStream = wantsStream(request);
 
-        /* Gemini vision fallback (no DeepSeek vision model configured) */
-        if (images.length && !visionModel) {
-            if (!geminiApiKey) {
-                return json(200, { answer: 'Фото загружено, но GEMINI_API_KEY не настроен для просмотра фото.' });
-            }
-            const answer = await askGeminiVision({ apiKey: geminiApiKey, images, userMessage, history, webContext });
-            if (useStream) {
-                const encoder = new TextEncoder();
-                return new Response(
-                    new ReadableStream({
-                        start(controller) {
-                            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: answer })}\n\n`));
-                            controller.close();
-                        }
-                    }),
-                    { headers: { ...corsHeaders(request), 'Content-Type': 'text/event-stream', 'Connection': 'keep-alive' } }
-                );
-            }
-            return json(200, { answer });
-        }
+        /* Gemini via OpenAI-compatible endpoint */
+        const GEMINI_OPENAI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 
-        /* DeepSeek request */
-        const model = effectiveImages.length ? visionModel : textModel;
-        const requestDeepSeek = (maxTokens) => fetch('https://api.deepseek.com/chat/completions', {
+        const requestGemini = (maxTokens) => fetch(GEMINI_OPENAI_URL, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model, messages, thinking: { type: 'disabled' }, temperature: 0.7, max_tokens: maxTokens, stream: useStream })
+            headers: { 'Authorization': `Bearer ${geminiApiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: chatModel, messages, temperature: 0.7, max_tokens: maxTokens, stream: useStream })
         });
 
-        const requestedMaxTokens = 4096;
-        const safeFallbackMaxTokens = 2048;
-        let response = await requestDeepSeek(requestedMaxTokens);
+        const requestedMaxTokens = 8192;
+        const safeFallbackMaxTokens = 4096;
+        let response = await requestGemini(requestedMaxTokens);
 
         if (useStream) {
             if (!response.ok || !response.body) {
                 const raw = await response.text().catch(() => '');
                 if (requestedMaxTokens > safeFallbackMaxTokens && /max[_ ]?tokens|maximum|limit|too large/i.test(raw)) {
-                    response = await requestDeepSeek(safeFallbackMaxTokens);
+                    response = await requestGemini(safeFallbackMaxTokens);
                     if (!response.ok || !response.body) {
                         let d = {}; try { d = JSON.parse(await response.text().catch(() => '')); } catch {}
-                        return streamError(response.status, d?.error?.message || 'DeepSeek request failed.');
+                        return streamError(response.status, d?.error?.message || 'Gemini request failed.');
                     }
                 } else {
                     let data = {}; try { data = raw ? JSON.parse(raw) : {}; } catch {}
-                    return streamError(response.status, data?.error?.message || raw || 'DeepSeek request failed.');
+                    return streamError(response.status, data?.error?.message || raw || 'Gemini request failed.');
                 }
             }
 
-            if (!response.body) return streamError(response.status, 'DeepSeek returned an empty stream.');
+            if (!response.body) return streamError(response.status, 'Gemini returned an empty stream.');
 
             const encoder = new TextEncoder();
             const decoder = new TextDecoder();
