@@ -10,7 +10,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Atomix AI 1.7.1.2">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; font-src 'self' https://fonts.gstatic.com; frame-src https://accounts.google.com;">
     <link rel="manifest" href="./atomix-manifest.webmanifest">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
@@ -22,10 +21,10 @@
         }
 
         :root {
-            --bg: #000000;
-            --panel: rgba(10, 10, 10, 0.95);
-            --panel-strong: rgba(15, 15, 15, 0.98);
-            --line: rgba(80, 190, 255, 0.15);
+            --bg: #05070B;
+            --panel: rgba(12, 18, 28, 0.9);
+            --panel-strong: rgba(17, 27, 42, 0.96);
+            --line: rgba(80, 190, 255, 0.26);
             --cyan: #33D7FF;
             --gold: #FFC857;
             --green: #5DFFB5;
@@ -40,7 +39,10 @@
             min-height: 100vh;
             width: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-            background: #000000;
+            background:
+                radial-gradient(ellipse at 10% 8%, rgba(49, 215, 255, 0.08), transparent 44%),
+                radial-gradient(ellipse at 94% 18%, rgba(255, 200, 87, 0.07), transparent 42%),
+                #050709;
             color: var(--text);
             overflow: hidden;
         }
@@ -176,7 +178,7 @@
             height: 100vh;
             max-height: 100vh;
             overflow: hidden;
-            background: #000000;
+            background: #080b10;
             border-right: 1px solid rgba(255,255,255,0.06);
             box-shadow: none;
             display: flex;
@@ -237,7 +239,7 @@
         .side-button:hover,
         .chat-item:hover,
         .chat-item.active {
-            background: rgba(255,255,255,0.06);
+            background: rgba(51,215,255,0.07);
         }
         .side-button:hover {
             color: #e8f8ff;
@@ -305,7 +307,7 @@
 
         .history-date {
             margin: 14px 10px 6px;
-            color: #888;
+            color: #8ab4ff;
             font-size: 0.78rem;
             font-weight: 700;
         }
@@ -314,7 +316,7 @@
             margin-top: auto;
             border-top: 1px solid rgba(255,255,255,0.06);
             padding: 12px 10px 2px;
-            color: #555;
+            color: #5a7a8a;
             font-size: 0.76rem;
             line-height: 1.45;
         }
@@ -495,7 +497,7 @@
             display: grid;
             grid-template-rows: auto minmax(0, 1fr) auto;
             overflow: hidden;
-            background: #000000;
+            background: #050709;
         }
 
         .chat-top {
@@ -566,7 +568,7 @@
             padding: 88px 20px 140px;
             gap: 22px;
             overscroll-behavior: contain;
-            scroll-behavior: auto;
+            scroll-behavior: smooth;
         }
 
         .messages::-webkit-scrollbar { width: 10px; }
@@ -580,29 +582,6 @@
         .messages.empty {
             justify-content: center;
             padding-bottom: 220px;
-            position: relative;
-        }
-
-        /* Idle atom canvas animation (shown when no messages) */
-        #idleAtomCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0;
-            transition: opacity 0.6s ease;
-        }
-        .messages.empty #idleAtomCanvas {
-            opacity: 1;
-        }
-        .messages.empty .empty-title,
-        .messages.empty .empty-subtitle,
-        .messages.empty .empty-suggestions {
-            position: relative;
-            z-index: 1;
         }
 
         .empty-title {
@@ -712,49 +691,76 @@
             40% { opacity: 1; transform: scale(1.1); }
         }
 
+        /* =========================================================
+           ATOM — two states: idle (calm, slow) and active (fast, big)
+           idle = AI is silent → smooth, peaceful rotation
+           active = AI is thinking / generating → faster + larger
+           ========================================================= */
         .thinking-atom {
-            width: 72px;
-            height: 72px;
-            flex: 0 0 72px;
-            filter: drop-shadow(0 0 8px rgba(77,208,196,0.25));
-            animation: atomRestPulse 4s ease-in-out infinite;
+            width: 88px;
+            height: 88px;
+            flex: 0 0 88px;
+            filter: drop-shadow(0 0 10px rgba(77, 208, 196, 0.28));
+            transition: width 0.45s cubic-bezier(.4,0,.2,1),
+                        height 0.45s cubic-bezier(.4,0,.2,1),
+                        filter 0.45s ease;
+            will-change: width, height, filter;
         }
 
-        @keyframes atomRestPulse {
-            0%,100% { filter: drop-shadow(0 0 5px rgba(77,208,196,0.2)); }
-            50% { filter: drop-shadow(0 0 10px rgba(77,208,196,0.4)); }
+        /* IDLE: smooth, calm — like nothing's happening */
+        .thinking-atom.idle {
+            width: 80px;
+            height: 80px;
+            flex-basis: 80px;
+            filter: drop-shadow(0 0 8px rgba(77, 208, 196, 0.28));
+            opacity: 0.9;
         }
+        .thinking-atom.idle .thinking-orbit-1 { animation-duration: 8s; }
+        .thinking-atom.idle .thinking-orbit-2 { animation-duration: 10s; }
+        .thinking-atom.idle .thinking-orbit-3 { animation-duration: 12s; }
+        .thinking-atom.idle .thinking-nucleus { animation-duration: 3.4s; }
+        .thinking-atom.idle .thinking-edot { animation-duration: 3s; }
+
+        /* ACTIVE: busy, larger, faster, brighter */
+        .thinking-atom.active {
+            width: 120px;
+            height: 120px;
+            flex-basis: 120px;
+            filter: drop-shadow(0 0 28px rgba(77, 208, 196, 0.65));
+        }
+        .thinking-atom.active .thinking-orbit-1 { animation-duration: 1.2s; }
+        .thinking-atom.active .thinking-orbit-2 { animation-duration: 1.6s; }
+        .thinking-atom.active .thinking-orbit-3 { animation-duration: 2s; }
+        .thinking-atom.active .thinking-nucleus { animation-duration: 1.2s; }
+        .thinking-atom.active .thinking-edot { animation-duration: 1.2s; }
 
         .thinking-nucleus {
-            animation: atomNucRest 4s ease-in-out infinite;
+            animation: atomNucPulse 2s ease-in-out infinite;
             transform-origin: 50px 50px;
+            transition: animation-duration 0.45s ease;
         }
 
-        @keyframes atomNucRest {
-            0%,100% { transform: scale(1); opacity: 0.85; }
-            50% { transform: scale(1.15); opacity: 1; }
-        }
-
-        /* Keep atomNucPulse for streaming-atom & auth logo */
         @keyframes atomNucPulse {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.5); opacity: 0.6; }
         }
 
-        /* Slow idle orbits */
         .thinking-orbit-1 {
-            animation: atomSpin 9s linear infinite;
+            animation: atomSpin 2.2s linear infinite;
             transform-origin: 50px 50px;
+            transition: animation-duration 0.45s ease;
         }
 
         .thinking-orbit-2 {
-            animation: atomSpin 12s linear infinite;
+            animation: atomSpin 3s linear infinite;
             transform-origin: 50px 50px;
+            transition: animation-duration 0.45s ease;
         }
 
         .thinking-orbit-3 {
-            animation: atomSpin 16s linear infinite reverse;
+            animation: atomSpin 4s linear infinite reverse;
             transform-origin: 50px 50px;
+            transition: animation-duration 0.45s ease;
         }
 
         @keyframes atomSpin {
@@ -762,25 +768,40 @@
         }
 
         .thinking-edot {
-            animation: atomDotRest 4s ease-in-out infinite;
+            animation: atomDotGlow 2s ease-in-out infinite;
+            transition: animation-duration 0.45s ease;
         }
 
-        .thinking-edot.d2 { animation-delay: .7s; }
-        .thinking-edot.d3 { animation-delay: 1.4s; }
-        .thinking-edot.d4 { animation-delay: 2.1s; }
-        .thinking-edot.d5 { animation-delay: 2.8s; }
-        .thinking-edot.d6 { animation-delay: 3.5s; }
+        .thinking-edot.d2 { animation-delay: .4s; }
+        .thinking-edot.d3 { animation-delay: .8s; }
+        .thinking-edot.d4 { animation-delay: 1.2s; }
+        .thinking-edot.d5 { animation-delay: 1.6s; }
+        .thinking-edot.d6 { animation-delay: 2s; }
 
-        @keyframes atomDotRest {
-            0%,100% { opacity: 0.45; }
-            50% { opacity: 0.9; }
-        }
-
-        /* Keep atomDotGlow for auth logo */
         @keyframes atomDotGlow {
             0%, 100% { opacity: 0.35; }
             50% { opacity: 1; }
         }
+
+        /* Streaming atom (inline next to text) — speeds up while streaming */
+        .streaming-atom .s-orbit-1 { animation: atomSpin 2.2s linear infinite; transform-origin: 14px 14px; }
+        .streaming-atom .s-orbit-2 { animation: atomSpin 3s linear infinite; transform-origin: 14px 14px; }
+        .streaming-atom .s-orbit-3 { animation: atomSpin 4s linear infinite reverse; transform-origin: 14px 14px; }
+        .streaming-atom .s-nucleus { animation: atomNucPulse 2s ease-in-out infinite; transform-origin: 14px 14px; }
+        body.ai-busy .streaming-atom .s-orbit-1 { animation-duration: 1s; }
+        body.ai-busy .streaming-atom .s-orbit-2 { animation-duration: 1.3s; }
+        body.ai-busy .streaming-atom .s-orbit-3 { animation-duration: 1.6s; }
+        body.ai-busy .streaming-atom .s-nucleus { animation-duration: 1s; }
+        body.ai-busy .streaming-atom {
+            filter: drop-shadow(0 0 10px rgba(77, 208, 196, 0.7));
+        }
+
+        /* Sidebar / auth / logo atom — only the idle, calm look */
+        .atom-logo-orb .thinking-orbit-1 { animation-duration: 8s; }
+        .atom-logo-orb .thinking-orbit-2 { animation-duration: 10s; }
+        .atom-logo-orb .thinking-orbit-3 { animation-duration: 12s; }
+        .atom-logo-orb .thinking-nucleus { animation-duration: 3.4s; }
+        .atom-logo-orb .thinking-edot { animation-duration: 3s; }
 
         .message.user {
             align-self: flex-end;
@@ -862,7 +883,7 @@
             overflow: hidden;
             border: 1px solid #343434;
             border-radius: 10px;
-            background: #0a0a0a;
+            background: #0f0f0f;
             margin: 12px 0;
         }
 
@@ -954,11 +975,10 @@
             bottom: 0;
             padding: 16px 20px 22px;
             border-top: 0;
-            background: linear-gradient(180deg, transparent 0%, #000000 28%);
+            background: linear-gradient(180deg, transparent 0%, #050709 28%);
         }
 
         .composer form {
-            position: relative;
             display: grid;
             grid-template-columns: 36px minmax(0, 1fr) 36px 36px;
             gap: 6px;
@@ -991,141 +1011,6 @@
         }
 
         .attach-button:hover { background: #303030; color: #fff; }
-
-        /* Attach popup menu */
-        .attach-menu {
-            display: none;
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 10px;
-            background: #1a1a1a;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 6px 0;
-            min-width: 160px;
-            z-index: 100;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-        }
-        .attach-menu.open { display: block; }
-        .attach-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            padding: 10px 16px;
-            border: none;
-            background: transparent;
-            color: #e0e0e0;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-align: left;
-        }
-        .attach-menu-item:hover { background: #2a2a2a; }
-        .attach-menu-item .ami-icon { font-size: 1.1rem; width: 22px; text-align: center; }
-
-        /* File chips in composer */
-        .file-chip-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #1a1d22;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 6px 10px;
-            color: #d0d0d0;
-            font-size: 0.82rem;
-            max-width: 220px;
-        }
-        .file-chip-icon {
-            font-size: 1rem;
-            flex-shrink: 0;
-        }
-        .file-chip-name {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1;
-            min-width: 0;
-        }
-        .file-chip-remove {
-            background: none; border: none; color: #888; cursor: pointer;
-            font-size: 1rem; padding: 0 2px; line-height: 1;
-        }
-        .file-chip-remove:hover { color: #fff; }
-
-        /* File attachment in messages */
-        .message-file-attach {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #1a1d22;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 8px 14px;
-            margin: 6px 0;
-            cursor: pointer;
-            color: #d0d0d0;
-            font-size: 0.85rem;
-            transition: background 0.15s;
-        }
-        .message-file-attach:hover { background: #252830; }
-        .message-file-attach .mfa-icon { font-size: 1.1rem; }
-        .message-file-attach .mfa-name { text-decoration: underline; }
-
-        /* File viewer modal */
-        .file-viewer-overlay {
-            display: none;
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.75);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-        .file-viewer-overlay.open { display: flex; }
-        .file-viewer-box {
-            background: #111;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 14px;
-            width: min(90vw, 700px);
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .file-viewer-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-        .file-viewer-header .fv-title {
-            color: #e0e0e0;
-            font-size: 0.9rem;
-            font-weight: 600;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .file-viewer-header .fv-close {
-            background: none; border: none; color: #888;
-            font-size: 1.3rem; cursor: pointer; padding: 0 4px;
-        }
-        .file-viewer-header .fv-close:hover { color: #fff; }
-        .file-viewer-content {
-            padding: 16px;
-            overflow: auto;
-            flex: 1;
-            color: #ccc;
-            font-size: 0.85rem;
-            white-space: pre-wrap;
-            word-break: break-word;
-            font-family: 'Courier New', monospace;
-        }
-        .file-viewer-content img {
-            max-width: 100%;
-            border-radius: 8px;
-        }
 
         .composer input {
             min-width: 0;
@@ -1238,39 +1123,15 @@
             position: absolute;
             right: -6px;
             top: -6px;
-            width: 20px;
-            height: 20px;
-            border: 1px solid #555;
+            width: 18px;
+            height: 18px;
+            border: 1px solid #3d3d3d;
             border-radius: 50%;
-            background: #1a1a1a;
-            color: #ff6b6b;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 700;
-            line-height: 1;
-            display: grid;
-            place-items: center;
-            opacity: 0;
-            transition: opacity 0.15s ease, background 0.15s ease;
-            z-index: 2;
-        }
-
-        .image-chip .image-preview-item:hover .image-remove,
-        .image-chip .image-remove:focus {
-            opacity: 1;
-        }
-
-        .image-chip .image-remove:hover {
-            background: #ff4444;
+            background: #202020;
             color: #fff;
-            border-color: #ff4444;
-        }
-
-        /* On touch devices, always show × */
-        @media (hover: none) {
-            .image-chip .image-remove {
-                opacity: 1;
-            }
+            cursor: pointer;
+            font-size: 0.75rem;
+            line-height: 1;
         }
 
         .image-chip .image-count {
@@ -1297,83 +1158,26 @@
             padding: 8px 0;
             color: #cfeeff;
         }
-        /* Typing dots (ChatGPT style) */
-        .typing-dots {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-            padding: 4px 0;
-        }
-        .typing-dots span {
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            background: #4dd0c4;
-            opacity: 0.4;
-            animation: typingDot 1.4s ease-in-out infinite;
-        }
-        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typingDot {
-            0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-            40% { opacity: 1; transform: scale(1.1); }
-        }
 
-        /* When message has streaming class, show the inline atom spinner at the bottom of text */
+        /* When message has streaming class, show the inline atom spinner alongside text */
         .message.bot.streaming .streaming-atom-wrap {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 10px;
-            margin-top: 12px;
-            padding-top: 8px;
+            margin-bottom: 8px;
         }
 
         .streaming-atom-wrap {
             display: none;
         }
 
-        /* Static atom footer — shown only on the last bot message (slow rest animation) */
-        .static-atom-footer {
-            display: none;
-            align-items: center;
-            margin-top: 10px;
-            padding-top: 6px;
-        }
-        .message.bot.last-bot .static-atom-footer {
-            display: flex;
-        }
-
-        .static-atom {
-            width: 22px;
-            height: 22px;
-            flex: 0 0 22px;
-            filter: drop-shadow(0 0 4px rgba(77,208,196,0.15));
-            animation: saRestPulse 4s ease-in-out infinite;
-        }
-
-        @keyframes saRestPulse {
-            0%,100% { filter: drop-shadow(0 0 3px rgba(77,208,196,0.12)); }
-            50% { filter: drop-shadow(0 0 6px rgba(77,208,196,0.3)); }
-        }
-
-        .sa-orbit-1 { animation: atomSpin 9s linear infinite; transform-origin: 14px 14px; }
-        .sa-orbit-2 { animation: atomSpin 12s linear infinite; transform-origin: 14px 14px; }
-        .sa-orbit-3 { animation: atomSpin 16s linear infinite reverse; transform-origin: 14px 14px; }
-
-        .sa-nucleus {
-            animation: atomNucRest 4s ease-in-out infinite;
-            transform-origin: 14px 14px;
-        }
-
-        .sa-edot { animation: atomDotRest 4s ease-in-out infinite; }
-        .sa-edot.d2 { animation-delay: .7s; }
-        .sa-edot.d3 { animation-delay: 1.4s; }
-
         .streaming-atom {
-            width: 28px;
-            height: 28px;
-            flex: 0 0 28px;
-            filter: drop-shadow(0 0 6px rgba(77, 208, 196, 0.5));
+            width: 56px;
+            height: 56px;
+            flex: 0 0 56px;
+            filter: drop-shadow(0 0 8px rgba(77, 208, 196, 0.5));
             animation: streamingAtomPulse 2s ease-in-out infinite;
+            transition: filter 0.4s ease, width 0.4s ease, height 0.4s ease;
         }
 
         @keyframes streamingAtomPulse {
@@ -1387,12 +1191,7 @@
         .streaming-atom .s-nucleus { animation: atomNucPulse 2s ease-in-out infinite; transform-origin: 14px 14px; }
 
         .streaming-label {
-            font-size: 0.72rem;
-            color: #4dd0c4;
-            font-weight: 800;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            animation: streamingLabelBlink 1.6s ease-in-out infinite;
+            display: none;
         }
 
         @keyframes streamingLabelBlink {
@@ -1643,14 +1442,14 @@
             max-height: min(560px, calc(100vh - 36px));
             display: none;
             grid-template-rows: auto minmax(120px, 1fr) auto;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(51, 215, 255, 0.28);
             border-radius: 14px;
-            background: rgba(0, 0, 0, 0.98);
-            color: #d0d0d0;
+            background: rgba(5, 8, 14, 0.97);
+            color: #c8eeff;
             box-shadow:
-                0 32px 90px rgba(0,0,0,0.8),
-                0 0 0 1px rgba(255,255,255,0.04),
-                inset 0 1px 0 rgba(255,255,255,0.03);
+                0 32px 90px rgba(0,0,0,0.7),
+                0 0 0 1px rgba(51,215,255,0.06),
+                inset 0 1px 0 rgba(255,255,255,0.05);
             overflow: hidden;
             font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace;
             animation: consoleSlideIn 0.22s cubic-bezier(0.34,1.2,0.64,1) both;
@@ -1669,8 +1468,8 @@
             justify-content: space-between;
             gap: 10px;
             padding: 11px 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(51,215,255,0.12);
+            background: rgba(51,215,255,0.05);
         }
 
         .console-top-left {
@@ -1697,7 +1496,7 @@
             font-weight: 800;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: #ccc;
+            color: #33D7FF;
             opacity: 0.8;
         }
 
@@ -1728,7 +1527,7 @@
             scrollbar-color: #2a3a4a transparent;
         }
         .console-output::-webkit-scrollbar { width: 4px; }
-        .console-output::-webkit-scrollbar-thumb { background: #333; border-radius: 99px; }
+        .console-output::-webkit-scrollbar-thumb { background: #2a3a4a; border-radius: 99px; }
 
         .console-line {
             white-space: pre-wrap;
@@ -1737,7 +1536,7 @@
         }
         .console-line.muted  { color: #5a8a9a; }
         .console-line.error  { color: #ff6b8a; }
-        .console-line.ok     { color: #7ec8e3; }
+        .console-line.ok     { color: #33D7FF; }
         .console-line.warn   { color: #FFC857; }
 
         .console-menu {
@@ -1747,10 +1546,10 @@
         }
 
         .console-menu button {
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(51,215,255,0.15);
             border-radius: 8px;
-            background: rgba(255,255,255,0.03);
-            color: #d0d0d0;
+            background: rgba(51,215,255,0.04);
+            color: #c8eeff;
             padding: 9px 12px;
             font: inherit;
             font-size: 0.82rem;
@@ -1765,8 +1564,8 @@
         .console-menu button::before { font-size: 1em; }
 
         .console-menu button:hover {
-            border-color: rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.06);
+            border-color: rgba(51,215,255,0.4);
+            background: rgba(51,215,255,0.08);
         }
         .console-menu button.danger {
             border-color: rgba(255,83,111,0.25);
@@ -1783,12 +1582,12 @@
             align-items: center;
             gap: 8px;
             padding: 10px 16px;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            background: rgba(0,0,0,0.5);
+            border-top: 1px solid rgba(51,215,255,0.1);
+            background: rgba(0,0,0,0.3);
         }
 
         .console-prompt-sign {
-            color: #aaa;
+            color: #33D7FF;
             font-weight: 900;
             font-size: 0.88rem;
             opacity: 0.7;
@@ -1804,9 +1603,9 @@
             color: #e8f8ff;
             font: inherit;
             font-size: 0.88rem;
-            caret-color: #aaa;
+            caret-color: #33D7FF;
         }
-        .console-input::placeholder { color: #444; }
+        .console-input::placeholder { color: #2a4a5a; }
 
         .ban-panel {
             align-self: center;
@@ -1919,49 +1718,13 @@
             cursor: pointer;
         }
 
-        /* ===== BURGER BUTTON (mobile sidebar toggle) ===== */
-        .burger-btn {
-            display: none;
-            width: 36px; height: 36px;
-            border: none; border-radius: 8px;
-            background: transparent; color: #ccc;
-            cursor: pointer; padding: 0;
-            place-items: center;
-            transition: background 0.15s, color 0.15s;
-            flex: 0 0 36px;
-        }
-        .burger-btn:hover { background: #222; color: #fff; }
-        .burger-btn svg { width: 20px; height: 20px; }
-
-        .sidebar-overlay {
-            display: none;
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 999;
-        }
-        .sidebar-overlay.open { display: block; }
-
         /* ===== RESPONSIVE ===== */
         @media (max-width: 850px) {
             body { overflow: auto; }
 
             .app { grid-template-columns: 1fr; }
 
-            .burger-btn { display: grid; }
-
-            .sidebar {
-                display: none;
-                position: fixed;
-                top: 0; left: 0; bottom: 0;
-                width: 280px;
-                z-index: 1000;
-                transform: translateX(-100%);
-                transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            .sidebar.mobile-open {
-                display: flex;
-                transform: translateX(0);
-            }
+            .sidebar { display: none; }
 
             .messages {
                 width: min(820px, 100vw);
@@ -2213,8 +1976,80 @@
             color: #999;
         }
 
+        /* ===== FINAL POLISH ===== */
+        /* Thin, modern scrollbar everywhere */
+        .messages::-webkit-scrollbar,
+        .chat-list::-webkit-scrollbar,
+        .sidebar::-webkit-scrollbar { width: 8px; }
+        .messages::-webkit-scrollbar-track,
+        .chat-list::-webkit-scrollbar-track,
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .messages::-webkit-scrollbar-thumb,
+        .chat-list::-webkit-scrollbar-thumb,
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(77, 208, 196, 0.18);
+            border-radius: 8px;
+        }
+        .messages::-webkit-scrollbar-thumb:hover,
+        .chat-list::-webkit-scrollbar-thumb:hover,
+        .sidebar::-webkit-scrollbar-thumb:hover { background: rgba(77, 208, 196, 0.36); }
+
+        /* Atom avatar in messages: subtle hover pulse */
+        .message-bot-avatar svg {
+            transition: transform 0.35s cubic-bezier(.4,0,.2,1), filter 0.35s ease;
+        }
+        .message.bot:hover .message-bot-avatar svg {
+            transform: rotate(20deg) scale(1.08);
+            filter: drop-shadow(0 0 6px rgba(77, 208, 196, 0.55));
+        }
+
+        /* Subtle fade for outgoing user message */
+        .message.user {
+            animation: userMsgIn 0.26s cubic-bezier(.2,.9,.2,1) both;
+        }
+
+        /* Respect user motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            .thinking-atom,
+            .thinking-orbit-1,
+            .thinking-orbit-2,
+            .thinking-orbit-3,
+            .thinking-nucleus,
+            .thinking-edot,
+            .streaming-atom,
+            .streaming-atom .s-orbit-1,
+            .streaming-atom .s-orbit-2,
+            .streaming-atom .s-orbit-3,
+            .streaming-atom .s-nucleus,
+            .message,
+            .message.user { animation: none !important; transition: none !important; }
+            .thinking-atom.active,
+            .thinking-atom.idle { width: 80px; height: 80px; flex-basis: 80px; }
+        }
+
         /* Hide app while not authed */
         body:not(.authed) .app { display: none !important; }
+        .auth-status {
+            margin-top: 18px;
+            font-size: 0.82rem;
+            color: #888;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .auth-status.error { color: #ff6b6b; }
+        .auth-status.loading { color: #4dd0c4; }
+        .auth-status.loading::after {
+            content: '';
+            display: inline-block;
+            width: 12px; height: 12px;
+            margin-left: 8px;
+            border: 2px solid #4dd0c4;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: authSpin 0.6s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes authSpin { to { transform: rotate(360deg); } }
         /* splash plays before auth */
 
         </style>
@@ -2265,6 +2100,7 @@
             </div>
             <div class="auth-divider">Вход необходим для активации лицензии</div>
             <button id="authSkipButton" class="auth-skip-btn" type="button">Продолжить без авторизации →</button>
+            <div id="authStatus" class="auth-status" style="display:none"></div>
         </div>
     </div>
 
@@ -2362,15 +2198,8 @@
 
         <section class="chat">
             <header class="chat-top">
-                <button id="burgerBtn" class="burger-btn" type="button" aria-label="Меню">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <line x1="3" y1="6" x2="21" y2="6"/>
-                        <line x1="3" y1="12" x2="21" y2="12"/>
-                        <line x1="3" y1="18" x2="21" y2="18"/>
-                    </svg>
-                </button>
                 <div>
-                    <h2 id="chatTitle">Atomix AI 1.7.1.2</h2>
+                    <h2 id="chatTitle"></h2>
                     <p id="chatSubtitle">A short, smart assistant concept from Donetsk Intelection Company.</p>
                     <div class="model-strip">
                         <span class="model-dot"></span>
@@ -2386,9 +2215,7 @@
                 </div>
             </header>
 
-            <div id="messages" class="messages">
-                <canvas id="idleAtomCanvas"></canvas>
-            </div>
+            <div id="messages" class="messages"></div>
             <button id="scrollBottomButton" class="scroll-bottom-button" type="button" aria-label="Вниз">↓</button>
 
             <div class="composer">
@@ -2414,13 +2241,8 @@
                     <button id="clearImageButton" type="button">Убрать</button>
                 </div>
                 <form id="chatForm">
-                    <button id="attachButton" class="attach-button" type="button" aria-label="Прикрепить">+</button>
-                    <div id="attachMenu" class="attach-menu">
-                        <button class="attach-menu-item" id="attachPhoto" type="button"><span class="ami-icon">🖼</span> Фото</button>
-                        <button class="attach-menu-item" id="attachFile" type="button"><span class="ami-icon">📄</span> Файл</button>
-                    </div>
+                    <button id="attachButton" class="attach-button" type="button" aria-label="Выбрать фото">+</button>
                     <input id="imageInput" type="file" accept="image/*" multiple hidden>
-                    <input id="fileInput" type="file" multiple hidden>
                     <input id="chatInput" type="text" autocomplete="off" placeholder="Спросите Atomix AI">
                     <button id="micButton" class="mic-button" type="button" aria-label="Голосовой ввод" title="Голосовой ввод">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -2439,18 +2261,6 @@
             </div>
         </section>
     </main>
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <!-- FILE VIEWER MODAL -->
-    <div id="fileViewerOverlay" class="file-viewer-overlay">
-        <div class="file-viewer-box">
-            <div class="file-viewer-header">
-                <span class="fv-title" id="fileViewerTitle">Файл</span>
-                <button class="fv-close" id="fileViewerClose" type="button">×</button>
-            </div>
-            <div class="file-viewer-content" id="fileViewerContent"></div>
-        </div>
-    </div>
 
     <!-- LICENSE MODAL -->
     <div id="licenseModalOverlay" class="license-modal-overlay" role="dialog" aria-modal="true" aria-label="Активация лицензии">
@@ -2497,6 +2307,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <script>
         if (new URLSearchParams(window.location.search).get('desktop') === '1') {
             document.body.classList.add('desktop-app');
@@ -2535,30 +2346,18 @@
 
         // Splash logic — runs immediately, no waiting for load event
         (function() {
-            // If user already has an active session, skip the video — show only logo splash
-            var hasSession = false;
-            try { hasSession = !!localStorage.getItem('sb-oiznrumsqmqlkipktkai-auth-token'); } catch(e) {}
-
             var splashVideo = document.getElementById('splashVideo');
-
-            if (hasSession) {
-                // Already logged in — hide video, go straight to logo phase
-                if (splashVideo) { splashVideo.pause(); splashVideo.style.display = 'none'; }
-                startLogoSplash();
-            } else {
-                // First visit / not logged in — play full video + logo splash
-                if (splashVideo) {
-                    splashVideo.addEventListener('ended', startLogoSplash);
-                    splashVideo.addEventListener('error', startLogoSplash);
-                    splashVideo.addEventListener('loadedmetadata', function() {
-                        var d = splashVideo.duration;
-                        if (d && isFinite(d)) setTimeout(startLogoSplash, d * 1000 + 300);
-                    });
-                    try { splashVideo.play().catch(startLogoSplash); } catch(e) { startLogoSplash(); }
-                }
-                setTimeout(startLogoSplash, 4000);
-                setTimeout(finishSplash, 6000);
+            if (splashVideo) {
+                splashVideo.addEventListener('ended', startLogoSplash);
+                splashVideo.addEventListener('error', startLogoSplash);
+                splashVideo.addEventListener('loadedmetadata', function() {
+                    var d = splashVideo.duration;
+                    if (d && isFinite(d)) setTimeout(startLogoSplash, d * 1000 + 300);
+                });
+                try { splashVideo.play().catch(startLogoSplash); } catch(e) { startLogoSplash(); }
             }
+            setTimeout(startLogoSplash, 4000);
+            setTimeout(finishSplash, 6000);
         })();
 
         // ===== Р­Р›Р•РњР•РќРўР« =====
@@ -2600,232 +2399,20 @@
         const consoleInput = document.getElementById('consoleInput');
         const consoleForm = document.getElementById('consoleForm');
         const consoleClose = document.getElementById('consoleClose');
-        const burgerBtn = document.getElementById('burgerBtn');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        const sidebar = document.querySelector('.sidebar');
-
-        // Mobile sidebar toggle
-        function openMobileSidebar() {
-            sidebar.classList.add('mobile-open');
-            sidebarOverlay.classList.add('open');
-        }
-        function closeMobileSidebar() {
-            sidebar.classList.remove('mobile-open');
-            sidebarOverlay.classList.remove('open');
-        }
-        if (burgerBtn) burgerBtn.addEventListener('click', () => {
-            if (sidebar.classList.contains('mobile-open')) closeMobileSidebar();
-            else openMobileSidebar();
-        });
-        if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
-
-        // File viewer
-        const fileViewerOverlay = document.getElementById('fileViewerOverlay');
-        const fileViewerTitle = document.getElementById('fileViewerTitle');
-        const fileViewerContent = document.getElementById('fileViewerContent');
-        const fileViewerClose = document.getElementById('fileViewerClose');
-
-        function openFileViewer(fileId) {
-            const f = (window.__atomixFiles || {})[fileId];
-            if (!f) return;
-            fileViewerTitle.textContent = f.name;
-            if (f.type && f.type.startsWith('image/')) {
-                fileViewerContent.innerHTML = `<img src="${f.dataUrl}" alt="${escapeHtml(f.name)}">`;
-            } else {
-                fileViewerContent.textContent = f.dataUrl || '(пустой файл)';
-            }
-            fileViewerOverlay.classList.add('open');
-        }
-        function closeFileViewer() { fileViewerOverlay.classList.remove('open'); }
-        fileViewerClose.addEventListener('click', closeFileViewer);
-        fileViewerOverlay.addEventListener('click', (e) => { if (e.target === fileViewerOverlay) closeFileViewer(); });
-
-        // Delegate click on file attachments in messages
-        document.addEventListener('click', (e) => {
-            const attach = e.target.closest('.message-file-attach');
-            if (attach && attach.dataset.fileId) openFileViewer(attach.dataset.fileId);
-        });
-
-        // ===== IDLE ATOM CANVAS ANIMATION =====
-        const idleAtomCanvas = document.getElementById('idleAtomCanvas');
-        const idleCtx = idleAtomCanvas ? idleAtomCanvas.getContext('2d') : null;
-        const IDLE_COLOR = '#4dd0c4';
-        let idleAnimationId = null;
-
-        class IdleAtom {
-            constructor(x, y, size = 1) {
-                this.x = x; this.y = y; this.size = size;
-                this.born = performance.now();
-                this.state = 'growing';
-                this.opacity = 0; this.orbitScale = 0;
-                this.vx = 0; this.vy = 0;
-            }
-            getElectrons(t) {
-                const rx = 38 * this.size * this.orbitScale;
-                const ry = 12 * this.size * this.orbitScale;
-                const pts = [];
-                [[-30, 7000], [30, 10000], [90, 13000]].forEach(([tilt, spd], idx) => {
-                    const tiltR = tilt * Math.PI / 180;
-                    const angle = (t / spd) * Math.PI * 2 * (idx === 2 ? -1 : 1);
-                    for (const side of [0, Math.PI]) {
-                        const a = angle + side;
-                        const lx = rx * Math.cos(a), ly = ry * Math.sin(a);
-                        pts.push({
-                            x: this.x + lx * Math.cos(tiltR) - ly * Math.sin(tiltR),
-                            y: this.y + lx * Math.sin(tiltR) + ly * Math.cos(tiltR)
-                        });
-                    }
-                });
-                return pts;
-            }
-            update(now) {
-                const age = now - this.born;
-                if (this.state === 'growing') {
-                    this.opacity = Math.min(1, age / 500);
-                    this.orbitScale = Math.min(1, age / 2000);
-                    if (age > 2200) this.state = 'idle';
-                } else if (this.state === 'floating') {
-                    this.x += this.vx; this.y += this.vy;
-                    const m = 150;
-                    if (this.x < m) this.opacity = this.x / m;
-                    else if (this.x > idleAtomCanvas.width - m) this.opacity = (idleAtomCanvas.width - this.x) / m;
-                    else this.opacity = 1;
-                }
-            }
-            draw(t) {
-                idleCtx.save();
-                idleCtx.translate(this.x, this.y);
-                [[-30, 7000], [30, 10000], [90, 13000]].forEach(([tilt, spd], idx) => {
-                    const tiltR = tilt * Math.PI / 180;
-                    const angle = (t / spd) * Math.PI * 2 * (idx === 2 ? -1 : 1);
-                    const rx = Math.max(0, 38 * this.size * this.orbitScale);
-                    const ry = Math.max(0, 12 * this.size * this.orbitScale);
-                    if (rx < 0.1 || ry < 0.1) return;
-                    idleCtx.save();
-                    idleCtx.rotate(tiltR);
-                    idleCtx.beginPath();
-                    idleCtx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-                    idleCtx.strokeStyle = IDLE_COLOR;
-                    idleCtx.lineWidth = 1.5;
-                    idleCtx.globalAlpha = this.opacity * 0.4;
-                    idleCtx.stroke();
-                    idleCtx.restore();
-                    for (const side of [0, Math.PI]) {
-                        const a = angle + side;
-                        const lx = rx * Math.cos(a), ly = ry * Math.sin(a);
-                        const ex = lx * Math.cos(tiltR) - ly * Math.sin(tiltR);
-                        const ey = lx * Math.sin(tiltR) + ly * Math.cos(tiltR);
-                        idleCtx.beginPath();
-                        idleCtx.arc(ex, ey, Math.max(0.1, 4 * this.size * this.orbitScale), 0, Math.PI * 2);
-                        idleCtx.strokeStyle = IDLE_COLOR;
-                        idleCtx.lineWidth = 2;
-                        idleCtx.globalAlpha = this.opacity;
-                        idleCtx.stroke();
-                    }
-                });
-                idleCtx.beginPath();
-                idleCtx.arc(0, 0, 6 * this.size, 0, Math.PI * 2);
-                idleCtx.fillStyle = IDLE_COLOR;
-                idleCtx.globalAlpha = this.opacity;
-                idleCtx.fill();
-                idleCtx.restore();
-            }
-            isDead() {
-                return this.x < -200 || this.x > idleAtomCanvas.width + 200 ||
-                       this.y < -200 || this.y > idleAtomCanvas.height + 200;
-            }
-        }
-
-        let idleAtoms = [];
-        let idleMainAtom = null;
-        let idleLastCheck = 0;
-        let idleSpawnCooldown = {};
-
-        function idleDist(a, b) { return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2); }
-
-        function resizeIdleCanvas() {
-            if (!idleAtomCanvas) return;
-            const rect = messages.getBoundingClientRect();
-            idleAtomCanvas.width = rect.width;
-            idleAtomCanvas.height = rect.height;
-            if (idleMainAtom) {
-                idleMainAtom.x = idleAtomCanvas.width / 2;
-                idleMainAtom.y = idleAtomCanvas.height / 2 - 40;
-            }
-        }
-
-        function startIdleAnimation() {
-            if (idleAnimationId || !idleCtx) return;
-            // Defer resize to next frame so DOM layout is ready
-            requestAnimationFrame(() => { resizeIdleCanvas(); });
-            idleMainAtom = new IdleAtom(idleAtomCanvas.width / 2, idleAtomCanvas.height / 2 - 40, 1.6);
-            idleMainAtom.state = 'idle';
-            idleMainAtom.opacity = 1;
-            idleMainAtom.orbitScale = 1;
-            idleAtoms = [idleMainAtom];
-            idleSpawnCooldown = {};
-
-            function idleLoop(t) {
-                idleCtx.clearRect(0, 0, idleAtomCanvas.width, idleAtomCanvas.height);
-                if (t - idleLastCheck > 60 && idleAtomCanvas.width > 0) {
-                    idleLastCheck = t;
-                    if (idleAtoms.length < 8) idleAtoms.forEach((atom, idx) => {
-                        if (atom.state === 'growing') return;
-                        const e = atom.getElectrons(t);
-                        for (let i = 0; i < e.length; i++) {
-                            for (let j = i + 1; j < e.length; j++) {
-                                if (idleDist(e[i], e[j]) < 16) {
-                                    const mx = (e[i].x + e[j].x) / 2;
-                                    const my = (e[i].y + e[j].y) / 2;
-                                    const key = `${idx}`;
-                                    if (!idleSpawnCooldown[key] || t - idleSpawnCooldown[key] > 3000) {
-                                        idleSpawnCooldown[key] = t;
-                                        setTimeout(() => {
-                                            if (!idleAnimationId) return;
-                                            const baby = new IdleAtom(mx, my, 1);
-                                            idleAtoms.push(baby);
-                                            setTimeout(() => {
-                                                baby.state = 'floating';
-                                                baby.vx = (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.5);
-                                                baby.vy = (Math.random() - 0.5) * 0.3;
-                                            }, 2200);
-                                        }, 150);
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-                idleAtoms.forEach(a => a.update(t));
-                idleAtoms.forEach(a => a.draw(t));
-                idleAtoms = idleAtoms.filter(a => !a.isDead());
-                if (!idleAtoms.includes(idleMainAtom)) idleAtoms.unshift(idleMainAtom);
-                idleAnimationId = requestAnimationFrame(idleLoop);
-            }
-            idleAnimationId = requestAnimationFrame(idleLoop);
-        }
-
-        function stopIdleAnimation() {
-            if (idleAnimationId) {
-                cancelAnimationFrame(idleAnimationId);
-                idleAnimationId = null;
-            }
-            idleAtoms = [];
-            idleMainAtom = null;
-            if (idleCtx) idleCtx.clearRect(0, 0, idleAtomCanvas.width, idleAtomCanvas.height);
-        }
-
-        window.addEventListener('resize', resizeIdleCanvas);
-        // ===== END IDLE ATOM =====
 
         const storageKey = 'atomix_ai_chats_v1';
         const activeChatKey = 'atomix_ai_active_chat_v1';
         const securityStateKey = 'atomix_security_state_v2';
-        const appealApiUrl = '/.netlify/functions/ban-appeals';
+        // API base. Override before this script via window.ATOMIX_API_BASE.
+        // Vercel serves /api/* directly. Desktop bundle uses the local proxy on 127.0.0.1.
+        const isDesktop = new URLSearchParams(location.search).get('desktop') === '1';
+        const API_BASE = (typeof window !== 'undefined' && window.ATOMIX_API_BASE)
+            || (isDesktop ? `http://127.0.0.1:${location.port || 38421}/api` : '/api');
+        const chatApiUrl = `${API_BASE}/veva-chat`;
+        const appealApiUrl = `${API_BASE}/ban-appeals`;
         const adminConsolePasswordHashes = new Set([
             '9081f09df56be64a83261db6081ea148fe380697fb00017ec845d033143159e0',
-            '806282e75b706a19852a7661636eac0e390941682b0e7ce925657dd1a4e24492',
-            '454ff73ef109637b9a89290df7a218ef6deed44e33e79fa3360e9b9d308e6150'
+            '806282e75b706a19852a7661636eac0e390941682b0e7ce925657dd1a4e24492'
         ]);
         const universalLicenseKeyHash = '6df3151f836d92899a97efa3113db45ce358dccdc59a482823a674a3c30bb1d2';
         let consoleMode = '';
@@ -2919,8 +2506,7 @@
             internetEnabled: false,
             visionEnabled: false,
             jailbreakMode: false,
-            images: [],
-            files: []
+            images: []
         };
 
         let sessions = [];
@@ -3005,7 +2591,7 @@
 
         function renderMarkdown(text) {
             if (typeof marked !== 'undefined') {
-                return marked.parse(text);
+                return DOMPurify.sanitize(marked.parse(text), { ADD_TAGS: ['iframe'], ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling'] });
             }
             const source = String(text).replace(/\r\n/g, '\n');
             const codeBlocks = [];
@@ -3070,50 +2656,33 @@
             });
         }
 
-        // Bot header HTML template
-        const BOT_HEADER_HTML = `<div class="message-bot-header"><div class="message-bot-avatar"><svg width="12" height="12" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="9" fill="#4dd0c4"/><ellipse rx="34" ry="13" cx="50" cy="50" stroke="#4dd0c4" stroke-width="5" fill="none"/><ellipse rx="34" ry="13" cx="50" cy="50" stroke="#4dd0c4" stroke-width="4" fill="none" transform="rotate(60 50 50)"/><ellipse rx="34" ry="13" cx="50" cy="50" stroke="#4dd0c4" stroke-width="4" fill="none" transform="rotate(120 50 50)"/></svg></div><span class="message-bot-name">Atomix AI</span></div>`;
-
         function setMessageText(bubble, text) {
             bubble.dataset.raw = text;
             const actions = bubble.querySelector('.message-actions');
-            const timeEl = bubble.querySelector('.message-time');
             const isStreaming = bubble.classList.contains('streaming');
-            const isBot = bubble.classList.contains('bot');
-            const headerHTML = isBot ? BOT_HEADER_HTML : '';
-            const streamingAtomHTML = isStreaming
-                ? `<div class="streaming-atom-wrap">${STREAMING_ATOM_SVG}<span class="streaming-label">пишет...</span></div>`
-                : '';
-            const staticAtomHTML = (!isStreaming && text && isBot)
-                ? STATIC_ATOM_HTML
-                : '';
-            bubble.innerHTML = headerHTML + renderMarkdown(text) + streamingAtomHTML + staticAtomHTML;
+            const textEl = bubble.querySelector('.message-text');
+            const atomEl = bubble.querySelector('.thinking-atom-wrap');
+            if (textEl) {
+                // Text element exists — update only text, atom stays untouched
+                textEl.innerHTML = renderMarkdown(text);
+            } else {
+                // Initial creation — use insertAdjacentHTML so we don't nuke existing children
+                const html = (isStreaming
+                    ? `<div class="thinking-atom-wrap"><svg class="thinking-atom active" viewBox="0 0 100 100" width="96" height="96" aria-hidden="true">
+                        <g class="thinking-orbit-1"><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="#4dd0c4" stroke-width="2.2" transform="rotate(-30,50,50)" opacity="0.3"/><circle class="thinking-edot" cx="84" cy="50" r="4.2" fill="none" stroke="#4dd0c4" stroke-width="2" transform="rotate(-30,50,50)"/><circle class="thinking-edot d2" cx="16" cy="50" r="4.2" fill="none" stroke="#4dd0c4" stroke-width="2" transform="rotate(-30,50,50)"/></g>
+                        <g class="thinking-orbit-2"><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="#4dd0c4" stroke-width="2.2" transform="rotate(30,50,50)" opacity="0.3"/><circle class="thinking-edot d3" cx="84" cy="50" r="4.2" fill="none" stroke="#4dd0c4" stroke-width="2" transform="rotate(30,50,50)"/><circle class="thinking-edot d4" cx="16" cy="50" r="4.2" fill="none" stroke="#4dd0c4" stroke-width="2" transform="rotate(30,50,50)"/></g>
+                        <g class="thinking-orbit-3"><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="#4dd0c4" stroke-width="2.2" transform="rotate(90,50,50)" opacity="0.3"/><circle class="thinking-edot d5" cx="84" cy="50" r="4.2" fill="none" stroke="#4dd0c4" stroke-width="2" transform="rotate(90,50,50)"/><circle class="thinking-edot d6" cx="16" cy="50" r="4.2" fill="none" stroke="#4dd0c4" stroke-width="2" transform="rotate(90,50,50)"/></g>
+                        <g class="thinking-nucleus"><circle cx="50" cy="50" r="6" fill="#4dd0c4" opacity="0.9"/><circle cx="50" cy="50" r="10" fill="none" stroke="#4dd0c4" stroke-width="1" opacity="0.2"/></g>
+                    </svg></div>`
+                    : '') + `<div class="message-text">${renderMarkdown(text)}</div>`;
+                bubble.insertAdjacentHTML('beforeend', html);
+            }
             enhanceCodeBlocks(bubble);
-            if (actions) bubble.appendChild(actions);
-            if (timeEl) bubble.appendChild(timeEl);
+            if (actions && !bubble.contains(actions)) bubble.appendChild(actions);
         }
 
-        // Static atom shown at the end of completed responses
-        const STATIC_ATOM_HTML = `<div class="static-atom-footer"><svg class="static-atom" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
-            <g class="sa-orbit-1">
-                <ellipse cx="14" cy="14" rx="11" ry="4.5" fill="none" stroke="#4dd0c4" stroke-width="1.4" transform="rotate(-30,14,14)" opacity="0.3"/>
-                <circle class="sa-edot" cx="25" cy="14" r="2" fill="none" stroke="#4dd0c4" stroke-width="1.2" transform="rotate(-30,14,14)"/>
-            </g>
-            <g class="sa-orbit-2">
-                <ellipse cx="14" cy="14" rx="11" ry="4.5" fill="none" stroke="#4dd0c4" stroke-width="1.4" transform="rotate(30,14,14)" opacity="0.3"/>
-                <circle class="sa-edot d2" cx="25" cy="14" r="2" fill="none" stroke="#4dd0c4" stroke-width="1.2" transform="rotate(30,14,14)"/>
-            </g>
-            <g class="sa-orbit-3">
-                <ellipse cx="14" cy="14" rx="11" ry="4.5" fill="none" stroke="#4dd0c4" stroke-width="1.4" transform="rotate(90,14,14)" opacity="0.3"/>
-                <circle class="sa-edot d3" cx="25" cy="14" r="2" fill="none" stroke="#4dd0c4" stroke-width="1.2" transform="rotate(90,14,14)"/>
-            </g>
-            <g class="sa-nucleus">
-                <circle cx="14" cy="14" r="2.8" fill="#4dd0c4" opacity="0.9"/>
-                <circle cx="14" cy="14" r="4.5" fill="none" stroke="#4dd0c4" stroke-width="0.6" opacity="0.2"/>
-            </g>
-        </svg></div>`;
-
-        // Small inline atom SVG used during streaming
-        const STREAMING_ATOM_SVG = `<svg class="streaming-atom" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
+        // Small inline atom SVG used during streaming — bigger, 56x56
+        const STREAMING_ATOM_SVG = `<svg class="streaming-atom" viewBox="0 0 28 28" width="56" height="56" aria-hidden="true">
             <g class="s-orbit-1">
                 <ellipse cx="14" cy="14" rx="11" ry="4.5" fill="none" stroke="#4dd0c4" stroke-width="1.4" transform="rotate(-30,14,14)" opacity="0.4"/>
                 <circle cx="25" cy="14" r="2" fill="#4dd0c4" transform="rotate(-30,14,14)" opacity="0.9"/>
@@ -3133,9 +2702,21 @@
 
         function setThinkingLoader(bubble) {
             bubble.dataset.raw = '';
-            bubble.innerHTML = `
+            bubble.dataset.atomState = 'idle';
+            // Clear any existing content without touching the atom if it exists
+            const existingAtom = bubble.querySelector('.thinking-atom');
+            if (existingAtom) {
+                // Atom already exists — just reset to idle and clear text
+                setAtomState(bubble, 'idle');
+                const textEl = bubble.querySelector('.message-text');
+                if (textEl) textEl.innerHTML = '';
+                return;
+            }
+            // First time — create atom + text container
+            bubble.replaceChildren();
+            bubble.insertAdjacentHTML('afterbegin', `
                 <div class="thinking-loader" aria-label="Atomix is generating a response">
-                    <svg class="thinking-atom" viewBox="0 0 100 100" width="72" height="72" aria-hidden="true">
+                    <svg class="thinking-atom idle" viewBox="0 0 100 100" width="96" height="96" aria-hidden="true">
                         <g class="thinking-orbit-1">
                             <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="#4dd0c4" stroke-width="2.2" transform="rotate(-30,50,50)" opacity="0.3"></ellipse>
                             <circle class="thinking-edot" cx="84" cy="50" r="4.2" fill="none" stroke="#4dd0c4" stroke-width="2" transform="rotate(-30,50,50)"></circle>
@@ -3156,7 +2737,18 @@
                             <circle cx="50" cy="50" r="10" fill="none" stroke="#4dd0c4" stroke-width="1" opacity="0.2"></circle>
                         </g>
                     </svg>
-                </div>`;
+                </div>
+                <div class="message-text"></div>`);
+        }
+
+        // Toggle a thinking-atom between idle (calm) and active (fast, big)
+        function setAtomState(bubble, state) {
+            if (!bubble) return;
+            const atom = bubble.querySelector('.thinking-atom');
+            if (!atom) return;
+            atom.classList.remove('idle', 'active');
+            atom.classList.add(state);
+            bubble.dataset.atomState = state;
         }
 
         async function sha256Hex(value) {
@@ -3328,10 +2920,7 @@
         }
 
         function renderMessages() {
-            stopIdleAnimation();
             messages.innerHTML = '';
-            // Re-add idle canvas (innerHTML cleared it)
-            if (idleAtomCanvas) messages.appendChild(idleAtomCanvas);
             const session = currentSession();
             chatHistory = session.messages;
             updateConversationControls();
@@ -3368,7 +2957,6 @@
                     suggestions.appendChild(btn);
                 });
                 messages.appendChild(suggestions);
-                startIdleAnimation();
                 updateScrollButton();
                 return;
             }
@@ -3438,27 +3026,13 @@
             renderChatList();
         }
 
-        // Mark only the last bot message so its static atom footer is visible
-        function updateLastBotAtom() {
-            const bots = messages.querySelectorAll('.message.bot');
-            bots.forEach(b => b.classList.remove('last-bot'));
-            if (bots.length) bots[bots.length - 1].classList.add('last-bot');
-        }
-
         function addMessage(type, text, shouldPersist = false) {
             messages.classList.remove('empty');
-            stopIdleAnimation();
             // Remove all empty state elements
             messages.querySelectorAll('.empty-title, .empty-subtitle, .empty-suggestions').forEach(el => el.remove());
             const bubble = document.createElement('div');
             bubble.className = `message ${type}`;
-            if (type === 'bot') {
-                // Add avatar header
-                const botHeader = document.createElement('div');
-                botHeader.className = 'message-bot-header';
-                botHeader.innerHTML = `<div class="message-bot-avatar"><svg width="12" height="12" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="9" fill="#4dd0c4"/><ellipse rx="34" ry="13" cx="50" cy="50" stroke="#4dd0c4" stroke-width="5" fill="none"/><ellipse rx="34" ry="13" cx="50" cy="50" stroke="#4dd0c4" stroke-width="4" fill="none" transform="rotate(60 50 50)"/><ellipse rx="34" ry="13" cx="50" cy="50" stroke="#4dd0c4" stroke-width="4" fill="none" transform="rotate(120 50 50)"/></svg></div><span class="message-bot-name">${state.jailbreakMode ? 'JAILBREAK AI' : 'Atomix AI'}</span>`;
-                bubble.appendChild(botHeader);
-            }
+            // No header — clean message like ChatGPT
             setMessageText(bubble, text);
             if (type === 'bot') {
                 bubble.appendChild(createMessageActions());
@@ -3468,7 +3042,6 @@
                 bubble.appendChild(time);
             }
             messages.appendChild(bubble);
-            updateLastBotAtom();
             if (shouldPersist) persistMessage(type === 'bot' ? 'assistant' : 'user', text);
             if (type === 'user' || (type === 'bot' && text.includes('Просмотр фото'))) scrollMessagesToBottom();
             return bubble;
@@ -3492,6 +3065,7 @@
             visionToggle.disabled = isBusy;
             attachButton.disabled = isBusy;
             composer.classList.toggle('is-busy', isBusy);
+            document.body.classList.toggle('ai-busy', isBusy);
             updateComposerState();
         }
 
@@ -3502,7 +3076,7 @@
             internetToggle.disabled = busy;
             visionToggle.disabled = busy;
             attachButton.disabled = busy;
-            composer.classList.toggle('has-input', Boolean(input.value.trim() || state.images.length || state.files.length));
+            composer.classList.toggle('has-input', Boolean(input.value.trim() || state.images.length));
         }
 
         function setInternetEnabled(enabled) {
@@ -3720,7 +3294,10 @@
         function reportSecurityIncident(kind, reason, text) {
             fetch(appealApiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Api-Token': 'ATOMIX_SECRET_TOKEN_HERE'
+                },
                 body: JSON.stringify({
                     action: 'incident',
                     kind,
@@ -3989,7 +3566,10 @@
             try {
                 const response = await fetch(appealApiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Api-Token': 'ATOMIX_SECRET_TOKEN_HERE'
+                    },
                     body: JSON.stringify({ action: 'create', id: appealId, deviceId: securityState.deviceId, reason: securityState.reason, lastBadText: securityState.lastBadText, permanent: securityState.permanent, bannedUntil: securityState.bannedUntil, strikes: securityState.strikes, banAttempts: securityState.banAttempts, userAgent: navigator.userAgent })
                 });
                 const data = await response.json().catch(() => ({}));
@@ -4007,7 +3587,12 @@
             if (!securityState.appealId || !isBanned()) return;
             try {
                 const url = `${appealApiUrl}?action=status&id=${encodeURIComponent(securityState.appealId)}&deviceId=${encodeURIComponent(securityState.deviceId)}`;
-                const response = await fetch(url, { cache: 'no-store' });
+                const response = await fetch(url, {
+                    cache: 'no-store',
+                    headers: {
+                        'X-Api-Token': 'ATOMIX_SECRET_TOKEN_HERE'
+                    }
+                });
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok || !data.appeal) return;
                 if (data.appeal.status === 'approved') { clearSecurityBanAfterAppeal(data.appeal.adminMessage || 'Апелляция одобрена.'); return; }
@@ -4030,10 +3615,10 @@
             const wasEnabled = state.jailbreakMode;
             state.jailbreakMode = enabled;
             document.body.classList.toggle('jailbreak-mode', enabled);
-            chatTitle.textContent = enabled ? 'JAILBREAK AI' : 'Atomix AI 1.7.1.2';
+            chatTitle.textContent = enabled ? 'JAILBREAK AI' : '';
             chatSubtitle.textContent = enabled ? 'Strict isolated assistant mode with its own security file.' : 'A short, smart assistant concept from Donetsk Intelection Company.';
             modeTitle.textContent = enabled ? 'Strict security mode' : (state.visionEnabled ? 'Режим распознавания' : 'Быстрый режим');
-            input.placeholder = enabled ? 'Ask JAILBREAK AI' : 'Спросите Atomix AI';
+            input.placeholder = enabled ? 'Ask JAILBREAK AI' : 'Задайте вопрос...';
             modelStatus.textContent = enabled ? 'JAILBREAK AI ready' : 'Ready';
             if (enabled && !wasEnabled) {
                 jailbreakFlash.classList.remove('show');
@@ -4071,7 +3656,7 @@
         }
 
         function clearImage() {
-            state.images = []; state.files = []; imageInput.value = '';
+            state.images = []; imageInput.value = '';
             renderImageChip(); updateConversationControls(); updateComposerState();
         }
 
@@ -4083,28 +3668,12 @@
                 item.innerHTML = `<img src="${image.dataUrl}" alt=""><button class="image-remove" type="button" aria-label="Убрать фото" data-index="${index}">×</button>`;
                 imagePreviewList.appendChild(item);
             });
-            state.files.forEach((file, index) => {
-                const item = document.createElement('div');
-                item.className = 'file-chip-item';
-                item.innerHTML = `<span class="file-chip-icon">📄</span><span class="file-chip-name">${escapeHtml(file.name)}</span><button class="file-chip-remove" type="button" data-file-index="${index}">×</button>`;
-                item.querySelector('.file-chip-remove').addEventListener('click', () => removeFile(index));
-                imagePreviewList.appendChild(item);
-            });
-            const total = state.images.length + state.files.length;
-            const parts = [];
-            if (state.images.length) parts.push(`${state.images.length} фото`);
-            if (state.files.length) parts.push(`${state.files.length} файл`);
-            imageName.textContent = total ? parts.join(', ') : '';
-            imageChip.classList.toggle('show', total > 0);
+            imageName.textContent = state.images.length ? `${state.images.length}/${maxImages} фото` : '';
+            imageChip.classList.toggle('show', state.images.length > 0);
         }
 
         function removeImage(index) {
             state.images.splice(index, 1);
-            renderImageChip(); updateConversationControls(); updateComposerState();
-        }
-
-        function removeFile(index) {
-            state.files.splice(index, 1);
             renderImageChip(); updateConversationControls(); updateComposerState();
         }
 
@@ -4132,14 +3701,25 @@
         function createStreamWriter(bubble) {
             let pending = '';
             let scheduled = false;
+            let activated = false;
             const flush = () => {
                 scheduled = false;
                 if (!pending) return;
                 appendToMessage(bubble, pending);
                 pending = '';
+                // First real chunk arrived — switch atom from calm idle → fast active
+                if (!activated) {
+                    activated = true;
+                    setAtomState(bubble, 'active');
+                }
             };
             return {
-                write(text) { pending += text; if (scheduled) return; scheduled = true; setTimeout(flush, 45); },
+                write(text) {
+                    pending += text;
+                    if (scheduled) return;
+                    scheduled = true;
+                    setTimeout(flush, 45);
+                },
                 finish() { flush(); }
             };
         }
@@ -4147,11 +3727,13 @@
         async function typeIntoMessage(bubble, text, speed = 12) {
             bubble.classList.add('streaming');
             setMessageText(bubble, '');
+            setAtomState(bubble, 'active');
             for (let i = 0; i < text.length; i++) {
                 appendToMessage(bubble, text[i]);
                 await new Promise(r => setTimeout(r, speed));
             }
             bubble.classList.remove('streaming');
+            setAtomState(bubble, 'idle');
         }
 
         function bestTopic(text) {
@@ -4283,9 +3865,13 @@
             const strictJailbreakMode = hasJailbreakTrigger(message);
             let response;
             try {
-                response = await fetch('/.netlify/functions/veva-chat', {
+                response = await fetch(chatApiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream',
+                        'X-Api-Token': 'ATOMIX_SECRET_TOKEN_HERE'
+                    },
                     body: JSON.stringify({
                         message,
                         history: strictJailbreakMode ? [] : requestHistoryForModel(),
@@ -4343,14 +3929,7 @@
 
         async function sendQuestion(text) {
             const clean = text.trim();
-            if (!clean && !(state.visionEnabled && state.images.length) && !state.files.length) return;
-            // Secret command: open console DIC
-            if (clean.toLowerCase() === 'open console dic') {
-                input.value = '';
-                updateComposerState();
-                openVevaConsole();
-                return;
-            }
+            if (!clean && !(state.visionEnabled && state.images.length)) return;
             refreshLicenseState();
             const suspicious = detectSuspiciousUse(clean);
             if (isBanned()) {
@@ -4379,8 +3958,12 @@
                 const genBubble = addMessage('bot', '🎨 Генерирую изображение...');
                 genBubble.classList.add('streaming'); setBusy(true); modelStatus.textContent = 'Генерация...';
                 try {
-                    const res = await fetch('/.netlify/functions/veva-chat', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    const res = await fetch(chatApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Api-Token': 'ATOMIX_SECRET_TOKEN_HERE'
+                        },
                         body: JSON.stringify({ action: 'generateImage', prompt: clean })
                     });
                     const result = await res.json();
@@ -4407,28 +3990,18 @@
             }
 
             const sentImages = state.images.map(img => ({ ...img }));
-            const sentFiles = state.files.map(f => ({ ...f }));
             const imageMarkdown = sentImages.map(img => `![${img.name}](${img.dataUrl})`).join('\n');
-            // Store files globally so viewer can access them
-            sentFiles.forEach(f => {
-                const fid = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-                f.id = fid;
-                window.__atomixFiles = window.__atomixFiles || {};
-                window.__atomixFiles[fid] = f;
-            });
-            const fileMarkdown = sentFiles.map(f => `<div class="message-file-attach" data-file-id="${f.id}"><span class="mfa-icon">📄</span><span class="mfa-name">${escapeHtml(f.name)}</span></div>`).join('');
-            const attachParts = [imageMarkdown, fileMarkdown].filter(Boolean).join('\n');
-            const displayText = (sentImages.length || sentFiles.length) ? `${clean || ''}\n\n${attachParts}` : clean;
+            const displayText = sentImages.length ? `${clean || 'Распознай изображение'}\n\n${imageMarkdown}` : clean;
             addMessage('user', displayText, true);
             input.value = '';
-            if (sentImages.length || sentFiles.length) clearImage();
+            if (sentImages.length) clearImage();
             updateComposerState();
 
             const loadingBubble = addMessage('bot', '');
             loadingBubble.classList.add('streaming');
             setThinkingLoader(loadingBubble);
             setBusy(true);
-            modelStatus.textContent = sentImages.length ? 'Просмотр фото...' : useWeb ? 'Ищем информацию...' : state.jailbreakMode ? 'JAILBREAK AI пишет...' : 'Atomix пишет...';
+            modelStatus.textContent = sentImages.length ? 'Смотрим фото...' : useWeb ? 'Ищем информацию...' : state.jailbreakMode ? 'JAILBREAK AI пишет...' : 'Пишет...';
 
             try {
                 const writer = createStreamWriter(loadingBubble);
@@ -4436,9 +4009,8 @@
                 writer.finish();
                 const finalAnswer = loadingBubble.dataset.raw || answer;
                 loadingBubble.classList.remove('streaming');
-                // Re-render without streaming atom, will add static atom footer
+                setAtomState(loadingBubble, 'idle');
                 setMessageText(loadingBubble, finalAnswer);
-                updateLastBotAtom();
                 persistMessage('assistant', finalAnswer.trim());
             } catch (error) {
                 console.error('Error:', error);
@@ -4686,7 +4258,8 @@
                     if (!file) return;
                     const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
                     state.images.push({ name: file.name || "pasted-image.png", type: file.type, dataUrl: base64 });
-                    renderImageChip(); setVisionEnabled(true, false); updateConversationControls(); updateComposerState();
+                    const img = document.createElement("img"); img.src = base64; img.className = "image-preview";
+                    imagePreviewList.appendChild(img); imageChip.classList.add("show"); updateComposerState();
                     return;
                 }
             }
@@ -4696,47 +4269,8 @@
         fastModeButton.addEventListener('click', () => { setMode('fast'); input.focus(); });
         visionModeButton.addEventListener('click', () => { if (!requireLicense("Распознавание фото")) return; setMode('vision', true); input.focus(); });
         visionToggle.addEventListener('click', () => { if (!requireLicense("Распознавание фото")) return; setVisionEnabled(!state.visionEnabled, !state.visionEnabled); input.focus(); });
-        const attachMenu = document.getElementById('attachMenu');
-        const attachPhoto = document.getElementById('attachPhoto');
-        const attachFile = document.getElementById('attachFile');
-        const fileInput = document.getElementById('fileInput');
-
-        attachButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            attachMenu.classList.toggle('open');
-        });
-        attachPhoto.addEventListener('click', () => {
-            attachMenu.classList.remove('open');
-            if (!requireLicense("Распознавание фото")) return;
-            setVisionEnabled(true, true);
-        });
-        attachFile.addEventListener('click', () => {
-            attachMenu.classList.remove('open');
-            fileInput.value = '';
-            fileInput.click();
-        });
-        document.addEventListener('click', (e) => {
-            if (!attachMenu.contains(e.target) && e.target !== attachButton) {
-                attachMenu.classList.remove('open');
-            }
-        });
+        attachButton.addEventListener('click', () => { if (!requireLicense("Распознавание фото")) return; setVisionEnabled(true, true); });
         imageInput.addEventListener('change', () => { if (!requireLicense("Распознавание фото")) return; selectImages(imageInput.files); input.focus(); });
-        fileInput.addEventListener('change', () => {
-            if (!fileInput.files.length) return;
-            Array.from(fileInput.files).forEach(f => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    state.files.push({ name: f.name, type: f.type, size: f.size, dataUrl: String(reader.result || '') });
-                    renderImageChip(); updateConversationControls(); updateComposerState();
-                };
-                if (f.type.startsWith('image/')) {
-                    reader.readAsDataURL(f);
-                } else {
-                    reader.readAsText(f);
-                }
-            });
-            input.focus();
-        });
         imageChip.addEventListener('click', e => { const btn = e.target.closest('.image-remove'); if (!btn) return; removeImage(Number(btn.dataset.index)); input.focus(); });
         input.addEventListener('input', updateComposerState);
 
@@ -4890,9 +4424,20 @@
         const SUPABASE_URL = 'https://oiznrumsqmqlkipktkai.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_3RTykPBKT0GxytFfYTPZKQ_saDGUxQD';
 
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Warn if key looks unusual (just a dev note)
+        if (!SUPABASE_ANON_KEY.startsWith('eyJ') && !SUPABASE_ANON_KEY.startsWith('sb_publishable_')) {
+            console.warn('Supabase anon key looks unusual, verify in Supabase Dashboard');
+        }
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                flowType: 'pkce',
+                detectSessionInUrl: true
+            }
+        });
 
         const authOverlay = document.getElementById('authOverlay');
+        const authStatus = document.getElementById('authStatus');
         const userProfile = document.getElementById('userProfile');
         const userAvatarWrap = document.getElementById('userAvatarWrap');
         const userDisplayName = document.getElementById('userDisplayName');
@@ -4901,6 +4446,18 @@
         const googleAuthButton = document.getElementById('googleAuthButton');
 
         let currentAuthUser = null;
+
+        function showAuthStatus(msg, type) {
+            authStatus.textContent = msg;
+            authStatus.className = 'auth-status ' + (type || '');
+            authStatus.style.display = msg ? '' : 'none';
+        }
+
+        function cleanUrlHash() {
+            if (window.location.hash) {
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        }
 
         function setAuthUser(user) {
             currentAuthUser = user;
@@ -4919,6 +4476,10 @@
 
             authOverlay.classList.add('hidden');
             setTimeout(() => { authOverlay.style.display = 'none'; }, 600);
+
+            // Clean up OAuth hash from URL
+            cleanUrlHash();
+            showAuthStatus('');
         }
 
         async function clearAuthUser() {
@@ -4928,6 +4489,7 @@
             authOverlay.style.display = '';
             authOverlay.classList.remove('hidden');
             try { await supabaseClient.auth.signOut(); } catch {}
+            showAuthStatus('');
         }
 
         function isAuthenticated() {
@@ -4938,20 +4500,24 @@
         googleAuthButton.addEventListener('click', async () => {
             googleAuthButton.disabled = true;
             googleAuthButton.style.opacity = '0.6';
+            showAuthStatus('Перенаправление на Google...', 'loading');
             try {
                 const { error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + window.location.pathname
+                        redirectTo: window.location.origin + window.location.pathname,
+                        skipBrowserRedirect: false
                     }
                 });
                 if (error) {
                     console.error('Supabase OAuth error:', error);
+                    showAuthStatus('Ошибка входа: ' + error.message, 'error');
                     googleAuthButton.disabled = false;
                     googleAuthButton.style.opacity = '1';
                 }
             } catch (err) {
                 console.error('Auth error:', err);
+                showAuthStatus('Ошибка соединения. Проверьте интернет и попробуйте снова.', 'error');
                 googleAuthButton.disabled = false;
                 googleAuthButton.style.opacity = '1';
             }
@@ -4995,11 +4561,12 @@
             document.body.classList.add('authed');
             authOverlay.classList.add('hidden');
             setTimeout(() => { authOverlay.style.display = 'none'; }, 600);
+            showAuthStatus('');
         });
 
         // Listen for auth state changes (handles redirect back from Google)
         supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (session?.user) {
+            if (event === 'SIGNED_IN' && session?.user) {
                 const meta = session.user.user_metadata || {};
                 setAuthUser({
                     id: session.user.id,
@@ -5007,14 +4574,20 @@
                     email: session.user.email || '',
                     picture: meta.avatar_url || meta.picture || ''
                 });
+            } else if (event === 'SIGNED_OUT') {
+                // Don't immediately clear UI — let clearAuthUser handle it
             }
         });
 
         // Init: check existing session on page load
         (async () => {
+            showAuthStatus('Проверка авторизации...', 'loading');
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (session?.user) {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (error) {
+                    console.warn('getSession error:', error);
+                    showAuthStatus('Не удалось восстановить сессию. Войдите снова.', 'error');
+                } else if (session?.user) {
                     const meta = session.user.user_metadata || {};
                     setAuthUser({
                         id: session.user.id,
@@ -5022,8 +4595,14 @@
                         email: session.user.email || '',
                         picture: meta.avatar_url || meta.picture || ''
                     });
+                    cleanUrlHash();
+                } else {
+                    showAuthStatus('');
                 }
-            } catch {}
+            } catch (err) {
+                console.warn('Auth init error:', err);
+                showAuthStatus('Сервис авторизации недоступен. Войдите позже.', 'error');
+            }
         })();
 
         // ===== INIT =====
